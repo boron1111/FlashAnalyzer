@@ -1,4 +1,4 @@
-function [image_registered offset]=image_register_correlation(image_reference,image_motion)
+function offset=image_correlation_offset(image_reference,image_motion)
 % ;This function deals with the problem of registration, with the correlation method
 % ;It is achieved by doing the FFT and match the position of images
 % ;Then shift the image to the new position
@@ -18,6 +18,4 @@ xoffset=mod(pos,sz(1));  %row
 if xoffset>sz(1)/2;xoffset=-sz(1)+xoffset;end
 yoffset=floor(pos/sz(1));  %column
 if yoffset>sz(2)/2;yoffset=-sz(2)+yoffset;end
-se=translate(strel(1),[-xoffset -yoffset]);
-image_registered=imdilate(image_motion,se);
 offset=[xoffset yoffset];

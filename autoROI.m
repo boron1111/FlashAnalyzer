@@ -1,4 +1,7 @@
-function autoROI
+function [ROIpoint count]=autoROI(I)
+
+a=I;
+
 
 figure;imshow(a)
 title('原始图');
@@ -6,7 +9,7 @@ imcontrast
 
 level=graythresh(a);
 bw=im2bw(a,level);
-bw=bwareaopen(bw,20);
+bw=bwareaopen(bw,15);
 bw=imclose(bw,strel('square',3));
 figure;imshow(bw)
 title('全局阈值');
@@ -22,7 +25,6 @@ averaged=imfilter(a,H);
 
 b=a>averaged;
 b=b&~bw;
-b=logical(b);
 b=imopen(b,strel('square',5));
 b=imclose(b,strel('square',3));
 figure;imshow(b)

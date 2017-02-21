@@ -1,6 +1,8 @@
 function FlashAnalyzer
     clc
     clear global
+    % ROI是画出的ROI的线的句柄，ROIpoint是flash的参数和围成ROI的点，ROItext是标记ROI的数字的句柄，flashsignal是ROI的时间序列均值
+    % drawf是图片显示的各层axes的句柄
     global newpath1 f0 th Select Datacursort panel12 panel112 listboxtemp Play Stop Mergebutton ShowTrackerImage...
         HideTrackerImage ShowTracker drawline hide hider hidef hideROI hideROIr hideROIf Rectanglt Segpolyt AutoROIp...
         Leftt Rightt ROIselection thresh listbox drawf trace slider threshold ptext statush timeh sliderB sliderC...
@@ -16,11 +18,11 @@ function FlashAnalyzer
     SetIcon(f0);
     th = uitoolbar(f0);
     
-     [Select,map]=imread('.\bitmaps\select.bmp');
-    Select=ind2rgb(Select,map);
-    Select= uitoggletool(th,'CData',Select,'TooltipString','Munual point','HandleVisibility','on','tag','Select');
-    set(Select,'OnCallback',@Selection)
-    set(Select,'OffCallback',@Selectionff)
+%      [Select,map]=imread('.\bitmaps\select.bmp');
+%     Select=ind2rgb(Select,map);
+%     Select= uitoggletool(th,'CData',Select,'TooltipString','Manual point','HandleVisibility','on','tag','Select');
+%     set(Select,'OnCallback',@Selection)
+%     set(Select,'OffCallback',@Selectionff)
     
     Data_cursor=imread('.\bitmaps\data_cursor.bmp');
 %     Data_cursor=ind2rgb(Data_cursor,map);
@@ -403,7 +405,8 @@ function save_movie(~,~)
 end
 
 function drawlinef(~,~)
-    global Rectanglt Segpolyt ROIselection  xy f0 trace count signalpoint currentflash i
+    global Rectanglt Segpolyt ROIselection  xy f0 trace count...
+        row col signalpoint currentflash i drawf
     
     set(Rectanglt,'value',0)
     set(Segpolyt,'value',0)
@@ -614,9 +617,12 @@ function Playf(s,~)
     end
 end
 
-%     function Stopf(~,~)
-%         sto=1;
-%     end
+%function Stopf
+%{
+function Stopf(~,~)
+    sto=1;
+end
+%}
 
 function recover(~,~)
     global f0
@@ -626,7 +632,7 @@ function recover(~,~)
     set(f0,'WindowButtonupFcn','')
 
 end
-%
+
 function windowmotionf(~,~)
     global trace f0 drawf ptext count signalpoint currentflash row col lsmdata rr rrchannel
 
@@ -866,6 +872,7 @@ function retangle(s,e)
                       signal1=zeros(1,r);
                       for i=1:r
                           imag=lsmdata(i).data{j};
+                          %矩形ROI
                           imag=imag(y(1):y(2),x(1):x(2));
                           imag=double(imag);
                           signal1(i)=mean(mean(imag));
@@ -877,7 +884,7 @@ function retangle(s,e)
                   s=signal{1};
                   s=sort(s);
                   point=[];
-                  if ~isempty(ind)&&length(ind)<6&&mean(s(1:10))>5&&~isempty(find(s>(mean(s)+1.3*std(s))))&&max(s)>0
+                  if ~isempty(ind)&&length(ind)<6&&mean(s(1:10))>5&&~isempty(find(s>(mean(s)+1.3*std(s)), 1))&&max(s)>0
                       Rise{count}=RiseTime;
                       Down{count}=DownTime;
                       stabledata{count,2}=num2str(ind-base+1);
@@ -1107,6 +1114,7 @@ function poly(s,e)
         function wbucb(src,~)
             if strcmp(get(src,'SelectionType'),'open')
                 set(src,'WindowButtonMotionFcn',@wb)
+                %画ROI的线
                 h1=line('XData',[x(1),x(end)],'YData',[y(1),y(end)],'color','r','Parent',drawf.f3);
                 hh=[hh,h1];
                 if length(x)==1
@@ -1115,6 +1123,7 @@ function poly(s,e)
                 else
                     count=count+1;
                     if get(hidef,'value')==0
+                        %加ROI的文字说明
                         h5=text(mean(x),mean(y),num2str(count),'Parent',drawf.f2);
                         set(h5,'color','r','HorizontalAlignment','center')
                     else
@@ -1123,7 +1132,7 @@ function poly(s,e)
                     end
 
                     ROItext(count)=h5;
-                    ROI{count}=hh; 
+                    ROI{count}=hh;
                     if currentflash>0
                         set(ROI{currentflash},'color',[1,1,1]);
                         set(ROItext(currentflash),'color',[0.8,0.8,0]);
@@ -1145,7 +1154,8 @@ function poly(s,e)
                     point.y=y;
                     ROIpoint{count}=point;
                     imag=lsmdata(1).data{1};
-
+                    
+                    %多边形ROI二值图
                     bw=roipoly(imag, x, y);
 
                     signal=cell(1,channel);
@@ -1176,7 +1186,7 @@ function poly(s,e)
                     s=signal{1};
                     s=sort(s);
 
-                    if ~isempty(ind)&&length(ind)<6&&mean(s(1:10))>5&&~isempty(find(s>(mean(s)+1.3*std(s))))&&max(s)>35
+                    if ~isempty(ind)&&length(ind)<6&&mean(s(1:10))>5&&~isempty(find(s>(mean(s)+1.3*std(s)), 1))&&max(s)>35
                         Rise{count}=RiseTime;
                         Down{count}=DownTime;
                         stabledata{count,2}=num2str(ind-base+1);
@@ -1347,6 +1357,7 @@ function deletthis(s,e)
                     end
                 end
                 hold(trace.f3,'off')
+                %更新ROI列表
                 currentmark(s,e);
                 set(listboxtemp,'string',stabledata(:,1),'value',currentflash);
 %                     set(tablef,'data',stabledata);
@@ -1642,7 +1653,7 @@ function downff(~,~)
 end
 
 function cb2c(~,~)
-    global drawf f0 trace col count ROIpoint ROI ROItext currentflash Leftt Rightt signal channel TraceColor...
+    global drawf f0 trace row col count ROIpoint ROI ROItext currentflash Leftt Rightt signal channel TraceColor...
         flashsignal listboxtemp signalpoint
     ggca=get(drawf.f1,'currentpoint');
     p=get(f0,'currentpoint');
@@ -2726,9 +2737,10 @@ function listboxf(~,~)
 end
 
 function showImageWithFilename(~,~)
+%     tic
     global Filename panel112 panel111 listboxtemp Leftt Rightt ROIselection Rectanglt Segpolyt AutoROIp f0 signal count...
         ROIpoint stabledata currentflash flashsignal signalpoint Rise Down DeltF_F0 Classf flg ROI ROItext drawf...
-        trace Pathname lsmdata info xy r row col zstack bits lsm_image info_extend channel channelcheckbox...
+        trace Pathname lsmdata info xy r row col zstack bits lsm_image info_extend channel channelcheckbox imAll...
         lastVal1 rrchannel BCdata sliderB sliderC panel12 slider rr lastVal mapAll OverAllTraceTrace normal thresh th threshold
     set(Leftt,'enable','off');
     set(Rightt,'enable','off');
@@ -2833,14 +2845,26 @@ function showImageWithFilename(~,~)
         lsmdata=lsm;
         clear lsm;
     end
+    
+    offsets=zeros(r,2,channel);
+    for i1=1:channel
+        for i=2:r
+            offsets(i,:,i1)=image_correlation_offset(lsmdata(1).data{i1},lsmdata(i).data{i1});
+        end
+    end
+%     toc
 
-    % backdoor register                   
-%     for i1=1:channel
-%         for i=2:r
-%             [lsmdata(i).data{i1},~]=image_register_correlation(lsmdata(1).data{i1},lsmdata(i).data{i1});
-%         end
-%     end
-    % backdoor register
+    imAll=zeros(row,col,channel,r);
+    for i1=1:channel
+        imAll(:,:,i1,1)=lsmdata(1).data{i1};
+        for i=2:r
+            lsmdata(i).data{i1}=translate_offset(lsmdata(1).data{i1},offsets(i,1,i1),offsets(i,2,i1));
+            imAll(:,:,i1,i)=lsmdata(i).data{i1};
+        end
+    end
+%     toc
+    
+    imAll=uint8(mean(imAll,4));
 
     if r==1
         set(slider,'enable','off');
@@ -2864,7 +2888,7 @@ function showImageWithFilename(~,~)
     set(threshold,'string',num2str(th));    
 
     set(f0,'name',['Flash Analysis              ',Filename]);
-
+%     toc
 end
 
 function SelectChannelf(s,~)
@@ -3427,6 +3451,8 @@ function savef(~,~)
 
 end
 
+% function raf1 raf2
+%{
 function raf1(s,~)
     global trace channel normal mapAll
     if get(s,'value')==1
@@ -3465,6 +3491,7 @@ function raf2(s,~)
     end   
 
 end
+%}
 
 function opennamef(~,~)
     global Pathname listbox
@@ -3490,10 +3517,13 @@ function opennamef(~,~)
     end
 end
 
-%     function opensinglenamef(s,e)
-%          Filename=deblank(cell2mat(inputdlg('filename')));
-%          showImageWithFilename;
-%     end
+% function opensinglenamef
+%{
+function opensinglenamef(s,e)
+     Filename=deblank(cell2mat(inputdlg('filename')));
+     showImageWithFilename;
+end
+%}
 
 function openFL(~,~)
     global listbox
@@ -3569,6 +3599,8 @@ function totaltracef(s,~)
     end
 end
 
+%function autoROIfp
+%{
 function autoROIfp(s,e)
     global Rectanglt Datacursort Segpolyt ROIselection f0 r drawf trace count signalpoint currentflash lsm...
         lsm_image statush ROIpoint stabledata flashsignal signal Rise Down DeltF_F0 Classf flg...
@@ -3722,23 +3754,25 @@ function autoROIfp(s,e)
         end
     end
 end
+%}
 
 function autof(s,e)
-    global f0 r drawf trace count signalpoint currentflash ...
-        lsm_image statush ROIpoint stabledata flashsignal signal Rise Down DeltF_F0 Classf flg...
-        ROItext ROI Leftt Rightt hidef listboxtemp
+    global f0 r drawf trace count currentflash imAll...
+        statush ROIpoint stabledata flashsignal signal ...
+        ROItext ROI Leftt Rightt hidef listboxtemp channelForAutoROI
     if r>1
+        if count;return;end
+        channelForAutoROI=3;
         set(statush,'string','Busy')
         set(f0,'WindowButtonMotionFcn','')
         flashsignal=[];
         ROI={};
         ROItext=[];
-        ROIpoint={};
         stabledata={};
-        count=0;
         cla(trace.f3)
-%         pause(0.1)
-        [ROIpoint,stabledata,count,flashsignal,signalpoint Rise Down DeltF_F0 Classf flg]=autoff(ROIpoint,stabledata,lsm_image,r,row,col,count,flashsignal);
+        % imAll是所有通道的时间序列平均值
+        I=imAll(:,:,channelForAutoROI);
+        [ROIpoint count]=autoROI(I);
         if count
             for i=1:count
                 point=ROIpoint{i};
@@ -3801,6 +3835,8 @@ function autof(s,e)
 
 end
 
+% function batchf(~,~)
+%{
 function batchf(~,~)
     global Pathname flashsignal count ROIpoint stabledata flg info xy row col lsm_image ROI...
         ROItext Rise Down currentflash signalpoint DeltF_F0 Classf OverAllTraceTrace normal r
@@ -3961,6 +3997,7 @@ function batchf(~,~)
 
 
 end
+%}
 
 function AutoTotalf(~,~)
     global info Time r th threshold statush f0 flashsignal ROI ROItext ROIpoint stabledata count...
@@ -4069,6 +4106,8 @@ function datacursoroff(~,~)
     datacursormode off
 end
 
+% function Selectionff Selection
+%{
 function Selectionff(~,~)
     global f0
     set(f0,'windowbuttonmotionfcn','','windowbuttondownfcn','','pointer','arrow')
@@ -4080,6 +4119,7 @@ function Selection(~,~)
     set(Datacursort,'state','off')
     set(f0,'windowbuttonmotionfcn',@motionf)
 end
+%}
 
 function BatchAutomaticDrawROI(~,~)
     global Pathname Filename
