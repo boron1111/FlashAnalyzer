@@ -3,10 +3,10 @@ function FlashAnalyzer
     clear global
     % ROI是画出的ROI的线的句柄，ROIpoint是flash的参数和围成ROI的点，ROItext是标记ROI的数字的句柄，flashsignal是ROI的时间序列均值
     % drawf是图片显示的各层axes的句柄
-    global newpath1 f0 th Select Datacursort panel12 panel112 listboxtemp Play Stop Mergebutton ShowTrackerImage...
+    global newpath1 f0 th Datacursort panel12 panel112 listboxtemp Play Stop Mergebutton ShowTrackerImage...
         HideTrackerImage ShowTracker drawline hide hider hidef hideROI hideROIr hideROIf Rectanglt Segpolyt AutoROIp...
         Leftt Rightt ROIselection thresh listbox drawf trace slider threshold ptext statush timeh sliderB sliderC...
-        BCdata bits panel111 mapAll TraceColor channelcheckbox Time Pathname Filename newpathsavestatus...
+        BCdata bits panel111 mapAll TraceColor channelcheckbox Time Pathname Filename newpathsavestatus channelForAutoROI...
         newpathload_status xy info r rr rrchannel lastVal lastVal1 count currentflash ROI ROItext ROIpoint Rise Down...
         stabledata DeltF_F0 MPD_amplitude Classf flg FDHM FAHM flashsignal signalpoint lsmdata lsm_image signal hlabel...
         drawlinearray drawlinetextarray drawlinecount sto row col zstack h_R h_P h_D OverAllTraceTrace normal channel info_extend
@@ -29,6 +29,10 @@ function FlashAnalyzer
     Datacursort= uitoggletool(th,'CData',Data_cursor,'TooltipString','Data_cursor','HandleVisibility','on');
     set(Datacursort,'OnCallback',@datacursoron)
     set(Datacursort,'OffCallback',@datacursoroff)
+    
+    Show_mean=imread('.\bitmaps\show_mean.bmp');
+    Show_mean=uipushtool(th,'cdata',Show_mean,'tooltipstring','show mean image','handlevisibility','on');
+    set(Show_mean,'ClickedCallback',@showMeanImage);
     
     %     panel1左侧主面板
     panel1=uipanel(f0,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0 0.6 1]);
@@ -312,6 +316,7 @@ function FlashAnalyzer
     jFrame=getJFrame(f0);
     jFrame.setMaximized(1);
     
+    channelForAutoROI='';
 end
 
 function ChangeColor(~,~)
@@ -2853,12 +2858,12 @@ function showImageWithFilename(~,~)
         end
     end
 %     toc
-
+    offsets=mode(offsets,3);
     imAll=zeros(row,col,channel,r);
     for i1=1:channel
         imAll(:,:,i1,1)=lsmdata(1).data{i1};
         for i=2:r
-            lsmdata(i).data{i1}=translate_offset(lsmdata(1).data{i1},offsets(i,1,i1),offsets(i,2,i1));
+            lsmdata(i).data{i1}=translate_offset(lsmdata(i).data{i1},offsets(i,1),offsets(i,2));
             imAll(:,:,i1,i)=lsmdata(i).data{i1};
         end
     end
@@ -3757,31 +3762,32 @@ end
 %}
 
 function autof(s,e)
-    global f0 r drawf trace count currentflash imAll...
-        statush ROIpoint stabledata flashsignal signal ...
+    global f0 r channel drawf trace count currentflash imAll hideROIf...
+        statush ROIpoint stabledata flashsignal signal lsmdata TraceColor...
         ROItext ROI Leftt Rightt hidef listboxtemp channelForAutoROI
     if r>1
-        if count;return;end
-        channelForAutoROI=3;
+%         if count;return;end
+        channelForAutoROI=inputdlg('input the channel for auto ROI','',1,{channelForAutoROI});
+        channelForAutoROI=channelForAutoROI{1};
         set(statush,'string','Busy')
         set(f0,'WindowButtonMotionFcn','')
-        flashsignal=[];
-        ROI={};
-        ROItext=[];
-        stabledata={};
         cla(trace.f3)
         % imAll是所有通道的时间序列平均值
-        I=imAll(:,:,channelForAutoROI);
-        [ROIpoint count]=autoROI(I);
+        meanIm=imAll(:,:,str2double(channelForAutoROI));
+        [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,str2double(channelForAutoROI),r,channel);
+        ROItext=zeros(1,count);
+        ROI=cell(1,count);
+        stabledata=cell(count,6);
         if count
             for i=1:count
                 point=ROIpoint{i};
                 xx=point.x;yy=point.y;   
                 hh=line('XData',xx,'YData', yy,'color',[1,1,1],'LineWidth',1,'parent',drawf.f3);
-                h5=text(mean(xx),mean(yy),num2str(i),'Parent',drawf.f2);
+                h5=text(mean(xx(1:end-1)),mean(yy(1:end-1)),num2str(i),'Parent',drawf.f2);
                 set(h5,'color',[0.8,0.8,0],'HorizontalAlignment','center')
                 ROItext(i)=h5;             
                 ROI{i}=hh;
+                stabledata{i,1}=num2str(i);
             end
         end
 
@@ -3795,11 +3801,18 @@ function autof(s,e)
             set(Leftt,'enable','off');
             set(Rightt,'enable','off');
         end
-        signal=flashsignal(currentflash,:);
+        
+        signal=flashsignal{currentflash};        
         cla(trace.f3)
-        h=plot(trace.f3,signal,'color',[0,1,0],'LineWidth',2,'tag','hs');
+        h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
         set(h,'buttondownfcn',@f0Downf);
-        axis(trace.f3,[1,r,min(signal)-10,max(signal)+10])
+%         axis(trace.f3,[1,r,min(signal)-10,max(signal)+10])
+        if channel>1
+            for j=2:channel
+                hold(trace.f3,'on')
+                plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
+            end
+        end
         axis(trace.f3,'on')
         set(trace.f3,'outerposition',[0,0,1,1])
         status=get(hidef,'value');
@@ -4440,4 +4453,9 @@ function selePara(~,~,buttobj)
                 Classf(currentflash)=0;
             end
     end
+end
+
+function showMeanImage(~,~)
+    global imAll bits mapAll drawf rrchannel
+    imshow(adjustedBCdata(uint8(imAll(:,:,rrchannel)./2^(bits-8))),mapAll{rrchannel},'parent',drawf.f1)
 end
