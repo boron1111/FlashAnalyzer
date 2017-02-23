@@ -1,41 +1,23 @@
 function [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,channelForAutoROI,...
     r,channel)
     % r是总帧数，channel是总通道数
-level=graythresh(meanIm);
-bw=im2bw(meanIm,level);
-bw=bwareaopen(bw,15);
-bw=imclose(bw,strel('square',3));
-% figure;imshow(bw)
-% title('全局阈值');
 
 H=fspecial('average',20);
 averaged=imfilter(meanIm,H);
-% figure;imshow(averaged);
-% title('局部平均');
-% imcontrast
 
-b=meanIm>averaged;
-b=bwareaopen(b,20);
-b=imclose(b,strel('square',3));
-% b=b&~bw;
-% figure;imshow(b)
-% title('新增局部阈值')
+bw=meanIm>averaged;
+bw=bwareaopen(bw,20);
+bw=imclose(bw,strel('square',3));
 
-bw=b|bw;
 D=bwdist(~bw);
 D=-D;
 
 D(~bw)=-inf;
 L=watershed(D);
-% rgb = label2rgb(L,'jet',[.5 .5 .5]);
-% imtool(rgb)
+
 L(L==mode(double(L(:))))=0;
 bw=L;
 bw=bwareaopen(bw,20);
-
-% figure;imshow(bw);
-% title('综合')
-% imcontrast
 
 [L,n]=bwlabel(bw);
 ROIpoint=cell(1,n);

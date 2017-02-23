@@ -3,7 +3,7 @@ function FlashAnalyzer
     clear global
     % ROI是画出的ROI的线的句柄，ROIpoint是flash的参数和围成ROI的点，ROItext是标记ROI的数字的句柄，flashsignal是ROI的时间序列均值
     % drawf是图片显示的各层axes的句柄
-    global newpath1 f0 th Datacursort panel12 panel112 listboxtemp Play Stop Mergebutton ShowTrackerImage...
+    global newpath1 f0 th Datacursort panel12 panel112 listboxtemp Play Stop Mergebutton ShowTrackerImage Show_mean...
         HideTrackerImage ShowTracker drawline hide hider hidef hideROI hideROIr hideROIf Rectanglt Segpolyt AutoROIp...
         Leftt Rightt ROIselection thresh listbox drawf trace slider threshold ptext statush timeh sliderB sliderC...
         BCdata bits panel111 mapAll TraceColor channelcheckbox Time Pathname Filename newpathsavestatus channelForAutoROI...
@@ -31,8 +31,8 @@ function FlashAnalyzer
     set(Datacursort,'OffCallback',@datacursoroff)
     
     Show_mean=imread('.\bitmaps\show_mean.bmp');
-    Show_mean=uipushtool(th,'cdata',Show_mean,'tooltipstring','show mean image','handlevisibility','on');
-    set(Show_mean,'ClickedCallback',@showMeanImage);
+    Show_mean=uitoggletool(th,'cdata',Show_mean,'tooltipstring','show mean image','handlevisibility','on');
+    set(Show_mean,'OnCallback',@showMeanImage);
     
     %     panel1左侧主面板
     panel1=uipanel(f0,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0 0.6 1]);
@@ -121,7 +121,7 @@ function FlashAnalyzer
     
     [AutoROI,map]=imread('.\bitmaps\gears.bmp');
     AutoROI=ind2rgb(AutoROI,map);
-    AutoROI=uicontrol(panel1111,'style','pushbutton','TooltipString','automatic ROI','CData',AutoROI,'units','Normalized','position',[2/10,0,1/10,1/2],'visible','on','callback',@autof,'BusyAction','cancel');
+    uicontrol(panel1111,'style','pushbutton','TooltipString','automatic ROI','CData',AutoROI,'units','Normalized','position',[2/10,0,1/10,1/2],'visible','on','callback',@autof,'BusyAction','cancel');
     %用于在分离线粒体上自动ROI
     
     [AutoROIp,map]=imread('.\bitmaps\gearsROI.bmp');
@@ -3561,11 +3561,15 @@ function fullname=OpenTxt()
 end
 
 function adjustBC(~,~)
-    global lsmdata BCdata sliderB sliderC rrchannel bits mapAll drawf rr
+    global lsmdata BCdata sliderB sliderC rrchannel bits mapAll drawf rr Show_mean imAll
     if ~isempty(lsmdata)
         BCdata(1,rrchannel)=get(sliderB,'value');
         BCdata(2,rrchannel)=get(sliderC,'value');
-        imshow(adjustedBCdata(uint8(lsmdata(rr).data{rrchannel}./2^(bits-8))),mapAll{rrchannel},'parent',drawf.f1);
+        if strcmp(get(Show_mean,'state'),'off')
+            imshow(adjustedBCdata(uint8(lsmdata(rr).data{rrchannel}./2^(bits-8))),mapAll{rrchannel},'parent',drawf.f1);
+        else
+            imshow(adjustedBCdata(uint8(imAll(:,:,rrchannel)./2^(bits-8))),mapAll{rrchannel},'parent',drawf.f1)
+        end
     end
 end
 
@@ -3764,7 +3768,7 @@ end
 function autof(s,e)
     global f0 r channel drawf trace count currentflash imAll hideROIf...
         statush ROIpoint stabledata flashsignal signal lsmdata TraceColor...
-        ROItext ROI Leftt Rightt hidef listboxtemp channelForAutoROI
+        ROItext ROI Leftt Rightt hidef listboxtemp channelForAutoROI row
     if r>1
 %         if count;return;end
         channelForAutoROI=inputdlg('input the channel for auto ROI','',1,{channelForAutoROI});
@@ -3774,7 +3778,7 @@ function autof(s,e)
         cla(trace.f3)
         % imAll是所有通道的时间序列平均值
         meanIm=imAll(:,:,str2double(channelForAutoROI));
-        [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,str2double(channelForAutoROI),r,channel);
+        [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,str2double(channelForAutoROI),r,channel,row);
         ROItext=zeros(1,count);
         ROI=cell(1,count);
         stabledata=cell(count,6);
