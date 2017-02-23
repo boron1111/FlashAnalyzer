@@ -1044,8 +1044,8 @@ function retangle(s,e)
                   set(f0,'windowbuttonmotionfcn',@wb)
               end
           end
-          clear s h5 hh point h1 h2 h3 h4 x y
-          pack
+%           clear s h5 hh point h1 h2 h3 h4 x y
+%           pack
           end
     end
 
@@ -1296,8 +1296,8 @@ function poly(s,e)
                     x=[];y=[];
                     hh=[];
                 end
-                clear data  bw  s imag  num xdat ydat cp xinit yinit pgca p
-                pack
+%                 clear data  bw  s imag  num xdat ydat cp xinit yinit pgca p
+%                 pack
 
             end
         end
@@ -1653,7 +1653,7 @@ function downff(~,~)
             delete(h4)
         end
 
-        clear str str1 x y  h3 h4 i j jj jjj a x1dat x2dat x3dat x4dat y1dat y2dat y3dat y4dat
+%         clear str str1 x y  h3 h4 i j jj jjj a x1dat x2dat x3dat x4dat y1dat y2dat y3dat y4dat
     end
 end
 
@@ -1723,9 +1723,9 @@ function cb2c(~,~)
         set(ROI{i},'color','r');
         set(ROItext(i),'color','r');
         signal=flashsignal{i};
-        pf=get(f0,'position');
+%         pf=get(f0,'position');
         set(trace.f3,'OuterPosition',[0,0,1,1])
-        clear pf
+%         clear pf
         cla(trace.f3)
         h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
         set(h,'buttondownfcn',@f0Downf);
@@ -1740,8 +1740,8 @@ function cb2c(~,~)
 %             axis(trace.f3,[1,r,min(signal)-10,max(signal)+10])
         currentmark(s,e);
         set(listboxtemp,'value',currentflash);
-        clear s iii  x1 y1 x2 y2 point1 pF
-        pack
+%         clear s iii  x1 y1 x2 y2 point1 pF
+%         pack
     end
 end
 
@@ -1758,8 +1758,8 @@ function savestatusf(~,~)
     end
 %         [filename, pathname] = uiputfile( {'*.mat'},'Save status as',Filename);
 
-    clear pathstr ext
-    pack
+%     clear pathstr ext
+%     pack
     if 1
         if r
             set(Leftt,'enable','off');
@@ -1841,8 +1841,8 @@ function savestatusf(~,~)
             if ~isempty(findobj(panel111,'Style','Checkbox'))
                 delete(findobj(panel111,'Style','Checkbox'))
             end
-            clear filename pathname
-            pack
+%             clear filename pathname
+%             pack
         end
     end
     set(f0,'name','Flash Analysis');
@@ -1866,7 +1866,7 @@ function savetracef(s,~)
                 wavelengthC(1:l)=wavelength;
             end
             wavelength=wavelengthC;
-            clear wavelengthC
+%             clear wavelengthC
             if isfield(info,'TimeOffset')
                 Time=info.TimeOffset;
             else
@@ -1919,8 +1919,8 @@ function savetracef(s,~)
             end
             xlswrite(fn,data,1,'A1');
         end
-        clear time nos data
-        pack
+%         clear time nos data
+%         pack
 
     elseif  val==2
         if ~isempty(flashsignal)
@@ -1950,8 +1950,8 @@ function savetracef(s,~)
                 delete(fn)
             end
             xlswrite(fn,data,1,'A1');
-            clear time nos data
-            pack
+%             clear time nos data
+%             pack
         else
             he=errordlg('There is no data output!','','modal');
             SetIcon(he);
@@ -1969,7 +1969,7 @@ function savetracef(s,~)
             end
 
             wavelength=wavelengthC;
-            clear wavelengthC
+%             clear wavelengthC
             if isfield(info,'TimeOffset')
                 Time=info.TimeOffset;
             else
@@ -2009,8 +2009,8 @@ function savetracef(s,~)
                 delete(fn)
             end
             xlswrite(fn,data,1,'A1');
-            clear time nos data  
-            pack
+%             clear time nos data  
+%             pack
         else
             he=errordlg('There is no data output!','','modal');
             SetIcon(he);
@@ -2065,8 +2065,8 @@ function Table_Selection(s,e)
             currentmark(s,e);
         end
 
-        clear selected_cells l x1 point x1 x2 y2 hh
-        pack
+%         clear selected_cells l x1 point x1 x2 y2 hh
+%         pack
     end
 
 end
@@ -2800,9 +2800,9 @@ function showImageWithFilename(~,~)
 
     elseif strcmp(ext,'.tif')
         [lsm_image,info,xy]=tifread(str);
-        clear pathstr name
-        pack
-        clear l x
+%         clear pathstr name
+%         pack
+%         clear l x
         disp('row,col')
         [row,col]=size(lsm_image(:,:,1));
     end
@@ -2848,7 +2848,7 @@ function showImageWithFilename(~,~)
             lsm(i).data{1}=lsmdata(i).data;
         end
         lsmdata=lsm;
-        clear lsm;
+%         clear lsm;
     end
     
     offsets=zeros(r,2,channel);
@@ -2948,14 +2948,14 @@ function closereq(~,~)
 %         save log.mat log
     delete(gcf)
     delete('lsm_image.mat')
-    clear dara pf imag
-    clear dra lsm_image map1 Playt ROIselection drawf.f1 Leftt Rightt map right left Analysist r1 c1 imag h stabledata ROI ROItext
-    clear icasig icasig1 icasig2 ROI ROItext th th1
-    clear info hnoname auto panel1 panel11 panel12 panel13 panel21 panel_right_down panel23
-    clear flashindex Rtime PeakA F0 deltF halfA halfT flg hlabelR hlabelP r 
-    clear f sto rr Line Linetext Linecount Val1 Val2 fittingROI fittingcount ss stat parameters
+%     clear dara pf imag
+%     clear dra lsm_image map1 Playt ROIselection drawf.f1 Leftt Rightt map right left Analysist r1 c1 imag h stabledata ROI ROItext
+%     clear icasig icasig1 icasig2 ROI ROItext th th1
+%     clear info hnoname auto panel1 panel11 panel12 panel13 panel21 panel_right_down panel23
+%     clear flashindex Rtime PeakA F0 deltF halfA halfT flg hlabelR hlabelP r 
+%     clear f sto rr Line Linetext Linecount Val1 Val2 fittingROI fittingcount ss stat parameters
     clc
-    pack
+%     pack
 
 end
 
@@ -3089,7 +3089,7 @@ function load_status(s,e)
                         lsm(i).data{1}=lsmdata(:,:,i);
                     end
                     lsmdata=lsm;
-                    clear lsm;
+%                     clear lsm;
                 end
                 namecolor{1}='Ch-T1';
                 wavelength{1}=488;
@@ -3251,7 +3251,7 @@ function load_status(s,e)
             wavelengthC=cell(1,channel);
             wavelengthC(1:l)=wavelength;
             wavelength=wavelengthC;
-            clear wavelengthC
+%             clear wavelengthC
             if channel>1
                 for i=1:channel
                     ss=[namecolor{i},':',num2str(wavelength{i})];
@@ -3452,7 +3452,7 @@ function savef(~,~)
 
         end
     end
-    clear cname        
+%     clear cname        
 
 end
 
@@ -3767,8 +3767,9 @@ end
 
 function autof(s,e)
     global f0 r channel drawf trace count currentflash imAll hideROIf...
-        statush ROIpoint stabledata flashsignal signal lsmdata TraceColor...
-        ROItext ROI Leftt Rightt hidef listboxtemp channelForAutoROI row
+        statush ROIpoint stabledata flashsignal signal TraceColor...
+        ROItext ROI Leftt Rightt hidef listboxtemp channelForAutoROI signalpoint...
+        Rise Down DeltF_F0 MPD_amplitude FDHM FAHM Classf flg lsmdata Time
     if r>1
 %         if count;return;end
         channelForAutoROI=inputdlg('input the channel for auto ROI','',1,{channelForAutoROI});
@@ -3778,7 +3779,7 @@ function autof(s,e)
         cla(trace.f3)
         % imAll是所有通道的时间序列平均值
         meanIm=imAll(:,:,str2double(channelForAutoROI));
-        [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,str2double(channelForAutoROI),r,channel,row);
+        [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,str2double(channelForAutoROI),r,channel);
         ROItext=zeros(1,count);
         ROI=cell(1,count);
         stabledata=cell(count,6);
@@ -3847,9 +3848,115 @@ function autof(s,e)
         end
         recover(s,e);
         set(statush,'string','Ready')
-        pack        
     end
-
+    
+    for id=1:count
+        signal=flashsignal{id};
+        [ind,pea,base,basepea,down,downpea,RiseTime,DownTime,hd,ha]=traceAnalysis(ones(1,r),r,Time);
+        s=signal{1};
+        s=sort(s);
+        point=[];
+        if ~isempty(ind)&&length(ind)<6&&mean(s(1:10))>5&&~isempty(find(s>(mean(s)+1.3*std(s)), 1))&&max(s)>0
+          Rise{id}=RiseTime;
+          Down{id}=DownTime;
+          stabledata{id,2}=num2str(ind-base+1);
+          str=[];
+          for i=1:length(ind)
+              str=[str,num2str((pea(i)-basepea(i))/basepea(i))];
+          end
+          stabledata{id,3}=str;
+          stabledata{id,4}=num2str(down-ind+1);
+          stabledata{id,6}=[];
+          point.ind=ind;
+          point.pea=pea;
+          point.base=base;
+          point.basepea=basepea;
+          point.down=down;
+          point.downpea=downpea;
+          DeltF_F0{id}=(pea-basepea)./basepea;
+          MPD_amplitude{id}=(pea-downpea)./downpea;
+          FDHM{id}=hd;
+          FAHM{id}=ha;
+          if RiseTime-DownTime>1
+              if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+                  if length(ind)==1
+                      Classf(id)=111;
+                      stabledata{id,5}=111;
+                  else
+                      Classf(id)=112;
+                      stabledata{id,5}=112;
+                  end
+              else
+                  if length(ind)==1
+                      Classf(id)=121;
+                      stabledata{id,5}=121;
+                  else
+                      Classf(id)=122;
+                      stabledata{id,5}=121;
+                  end
+              end
+          elseif DownTime-RiseTime>1
+              if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+                  if length(ind)==1
+                      Classf(id)=211;
+                      stabledata{id,5}=211;
+                  else
+                      Classf(id)=212;
+                      stabledata{id,5}=212;
+                  end
+              else
+                  if length(ind)==1
+                      Classf(id)=221;
+                      stabledata{id,5}=221;
+                  else
+                      Classf(id)=222;
+                      stabledata{id,5}=222;
+                  end
+              end
+          else
+              if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+                  if length(ind)==1
+                      Classf(id)=311;
+                      stabledata{id,5}=311;
+                  else
+                      Classf(id)=312;
+                      stabledata{id,5}=312;
+                  end
+              else
+                  if length(ind)==1
+                      Classf(id)=321;
+                      stabledata{id,5}=321;
+                  else
+                      Classf(id)=322;
+                      stabledata{id,5}=322;
+                  end
+              end
+          end
+        else
+          point.ind=[];
+          point.pea=[];
+          point.base=[];
+          point.basepea=[];
+          point.down=[];
+          point.downpea=[];
+          Rise{id}=[];
+          Down{id}=[];
+          DeltF_F0{id}=[];
+          MPD_amplitude{id}=[];
+          FDHM{id}=[];
+          FAHM{id}=[];
+          stabledata{id,2}=[];
+          stabledata{id,3}=[];
+          stabledata{id,4}=[];
+          stabledata{id,5}=[];
+          stabledata{id,6}=[];
+          Classf(id)=0;
+        end
+        flashsignal{id}=signal;
+        signalpoint{id}=point;
+        stabledata{id,1}=num2str(id);
+        flg(id)=0;
+    end
 end
 
 % function batchf(~,~)

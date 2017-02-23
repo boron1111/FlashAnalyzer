@@ -1,7 +1,7 @@
 function [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,channelForAutoROI,...
     r,channel)
     % r是总帧数，channel是总通道数
-
+% tic
 H=fspecial('average',20);
 averaged=imfilter(meanIm,H);
 
@@ -27,28 +27,56 @@ ROIpoint_s.base=[];
 ROIpoint_s.basepea=[];
 ROIpoint_s.down=[];
 ROIpoint_s.downpea=[];
+
+imCalMean=cell(1,n);
+
 for id=1:n
     bw1=L==id;
 %     disp(id);
     pos=find(bw1==1,1);
     pos2=[mod(pos,size(bw1,1)) ceil(pos/size(bw1,1))];
     pos2(pos2==0)=size(bw1,1);
-    boundaryv=bwtraceboundary(bw1,pos2,'e');
+    try
+        boundaryv=bwtraceboundary(bw1,pos2,'se');
+    catch e
+%         disp(e.message)
+%         disp(id);
+    end
     ROIpoint_s.x=boundaryv(:,2)';
     ROIpoint_s.y=boundaryv(:,1)';
     ROIpoint{id}=ROIpoint_s;
+    
+    imCalMean{id}=zeros(channel,r,sum(bw1(:)));
+    for id1=1:r
+        for id2=1:channel
+            imCalMean{id}(id2,id1,:)=lsmdata(id1).data{id2}(bw1);
+        end
+    end
+    
 end
+
+% toc
 
 count=n;
 flashsignal=cell(1,n);
 
+% for id=1:n
+%     bw1=L==id;
+%     flashsignal{id}=cell(1,channel);
+%     for ch=1:channel
+%         flashsignal{id}{ch}=zeros(1,r);
+%         for f=1:r
+%             flashsignal{id}{ch}(f)=mean(double(lsmdata(f).data{ch}(bw1)));
+% %             toc
+%         end
+%     end
+% end
+
 for id=1:n
-    bw1=L==id;
-    flashsignal{id}=cell(1,channel);
-    for ch=1:channel
-        flashsignal{id}{ch}=zeros(1,r);
-        for f=1:r
-            flashsignal{id}{ch}(f)=mean(double(lsmdata(f).data{ch}(bw1)));
-        end
-    end
+    tmp=mean(imCalMean{id},3);
+    tmp=num2cell(tmp,2);
+    flashsignal{id}=tmp';
 end
+
+%使用矩阵一次计算多个mean比只计算一个mean只节省了1s，对于100帧，要40多秒
+% toc
