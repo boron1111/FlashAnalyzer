@@ -2,6 +2,9 @@ function [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,channelForAutoROI,.
     r,channel)
     % r是总帧数，channel是总通道数
 % tic
+
+wb=waitbar(0);
+
 H=fspecial('average',20);
 averaged=imfilter(meanIm,H);
 
@@ -30,6 +33,8 @@ ROIpoint_s.downpea=[];
 
 imCalMean=cell(1,n);
 
+total=2*r*n;
+count=0;
 for id=1:n
     bw1=L==id;
 %     disp(id);
@@ -46,13 +51,15 @@ for id=1:n
     ROIpoint_s.y=boundaryv(:,1)';
     ROIpoint{id}=ROIpoint_s;
     
-    imCalMean{id}=zeros(channel,r,sum(bw1(:)));
+    imCalMean{id}=ones(channel,r,sum(bw1(:)))*100;
     for id1=1:r
-        for id2=1:channel
+%         for id2=1:channel
+        for id2=[1 3]
             imCalMean{id}(id2,id1,:)=lsmdata(id1).data{id2}(bw1);
         end
     end
-    
+    count=count+2*r;
+    waitbar(count/total,wb)
 end
 
 % toc
@@ -78,5 +85,6 @@ for id=1:n
     flashsignal{id}=tmp';
 end
 
+delete(wb)
 %使用矩阵一次计算多个mean比只计算一个mean只节省了1s，对于100帧，要40多秒
 % toc

@@ -1,6 +1,5 @@
 function FlashAnalyzer
     clc
-    clear global
     % ROI是画出的ROI的线的句柄，ROIpoint是flash的参数和围成ROI的点，ROItext是标记ROI的数字的句柄，flashsignal是ROI的时间序列均值
     % drawf是图片显示的各层axes的句柄
     global newpath1 f0 th Datacursort panel12 panel112 listboxtemp Play Stop Mergebutton ShowTrackerImage Show_mean...
@@ -24,15 +23,14 @@ function FlashAnalyzer
 %     set(Select,'OnCallback',@Selection)
 %     set(Select,'OffCallback',@Selectionff)
     
-    Data_cursor=imread('.\bitmaps\data_cursor.bmp');
-%     Data_cursor=ind2rgb(Data_cursor,map);
-    Datacursort= uitoggletool(th,'CData',Data_cursor,'TooltipString','Data_cursor','HandleVisibility','on');
+    Datacursort= uitoggletool(th,'CData',imread('.\bitmaps\data_cursor.bmp'),'TooltipString','Data_cursor','HandleVisibility','on');
     set(Datacursort,'OnCallback',@datacursoron)
     set(Datacursort,'OffCallback',@datacursoroff)
     
-    Show_mean=imread('.\bitmaps\show_mean.bmp');
-    Show_mean=uitoggletool(th,'cdata',Show_mean,'tooltipstring','show mean image','handlevisibility','on');
+    Show_mean=uitoggletool(th,'cdata',imread('.\bitmaps\show_mean.bmp'),'tooltipstring','show mean image','handlevisibility','on');
     set(Show_mean,'OnCallback',@showMeanImage);
+    
+    uipushtool(th,'cdata',imread('.\bitmaps\show_trace.bmp'),'tooltipstring','show trace','clickedcallback',@showTrace);
     
     %     panel1左侧主面板
     panel1=uipanel(f0,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0 0.6 1]);
@@ -378,35 +376,64 @@ opennamef;
 end
 
 function save_movie(~,~)
-    global Filename newpath1 lsmdata rrchannel mapAll r
+    global Filename newpath1 lsmdata rrchannel mapAll r row col rr
     if r
         if strcmp(Filename(end-3:end),'.lsm')||strcmp(Filename(end-3:end),'.mat')
             Filename=Filename(1:end-4);
         end
-        fn=strcat(Filename, '.gif');
-        if (newpath1==0)
-
-        else
+        
+        choice=questdlg('choose vedio format','','AVI','GIF','AVI');
+        if isempty(choice);return;end
+        
+        fn=[Filename,'.',char(choice+32)];
+        if ~(newpath1==0)
             str1=[newpath1,'\',fn];
         end
-        save_movie_gif
 
-    end
-    %save movie
-    function save_movie_gif
-        answer=inputdlg({'Input sstart fram','End fram'},'',1,{'1',num2str(r)});
+        answer=inputdlg({'Input sstart fram','End fram','frames per second'},'',1,{'1',num2str(r),'10'});
         if isempty(answer)
             return
         end
+        
         sstart=str2double(answer{1});
         final=str2double(answer{2});
-        imwrite(adjustedBCdata(lsmdata(sstart).data{rrchannel}),mapAll{rrchannel},str1,'gif', 'Loopcount',inf,'DelayTime',0.1);
-        for cou=2:final
-            imwrite(adjustedBCdata(lsmdata(cou).data{rrchannel}),mapAll{rrchannel},str1,'gif','WriteMode','append','DelayTime',0.1);
+        DelayTime=1/str2double(answer{3});
+        
+        if strcmp(choice,'GIF');
+            try
+                imwrite(adjustedBCdata(lsmdata(sstart).data{rrchannel}),mapAll{rrchannel},str1,'gif', 'Loopcount',inf,'DelayTime',DelayTime);
+                for cou=2:final
+                    imwrite(adjustedBCdata(lsmdata(cou).data{rrchannel}),mapAll{rrchannel},str1,'gif','WriteMode','append','DelayTime',DelayTime);
+                end
+                msgbox('done');
+            catch e
+                msgbox(e.message)
+            end
+        else
+            videoobj=VideoWriter(str1);
+            videoobj.FrameRate=str2double(answer{3});
+            open(videoobj);
+            try
+                tmp=rr; %为merged图片作准备
+                f=figure('menubar','none');
+                pos=get(f,'position');
+                set(f,'position',[pos(1) pos(2)-200 col row])
+                a=axes('unit','pixel','position',[1 1 col row],...
+                    'nextplot','replacechildren','parent',f,'visible','off',...
+                    'xlim',[0.5 col+0.5],'ylim',[0.5 row+0.5]);
+                for id=sstart:final
+                    rr=id;
+                    imshow(adjustedBCdata(lsmdata(id).data{rrchannel}),mapAll{rrchannel},'parent',a);
+                    writeVideo(videoobj,getframe(f));
+                end
+                delete(f)
+            catch e
+                disp(e.message)                
+            end
+            close(videoobj)
+            rr=tmp;
         end
-        msgbox('done');
     end
-
 end
 
 function drawlinef(~,~)
@@ -2756,7 +2783,9 @@ function showImageWithFilename(~,~)
     set(f0,'WindowButtonmotionfcn','')
     set(f0,'WindowButtonDownFcn','')
     set(f0,'WindowButtonUpFcn','')
-
+    
+    wb=waitbar(0);
+        
     signal=0;
     count=0;
     ROIpoint={};
@@ -2810,7 +2839,7 @@ function showImageWithFilename(~,~)
     info_extend=lsminf;
     channel=lsminf.NUMBER_OF_CHANNELS;
     namecolor=lsminf.ChannelColors.Names;
-
+%     toc
     if channel>1
         channelcheckbox=zeros(1,channel);
         for i=1:channel
@@ -2850,13 +2879,20 @@ function showImageWithFilename(~,~)
         lsmdata=lsm;
 %         clear lsm;
     end
+%     toc
+    offsets=zeros(r,2,channel); 
     
-    offsets=zeros(r,2,channel);
+    count1=0;
+    total=r*channel;
+    
     for i1=1:channel
         for i=2:r
             offsets(i,:,i1)=image_correlation_offset(lsmdata(1).data{i1},lsmdata(i).data{i1});
         end
+        count1=count1+r;
+        waitbar(count1/total,wb)
     end
+    delete(wb)
 %     toc
     offsets=mode(offsets,3);
     imAll=zeros(row,col,channel,r);
@@ -3767,9 +3803,16 @@ end
 
 function autof(s,e)
     global f0 r channel drawf trace count currentflash imAll hideROIf...
-        statush ROIpoint stabledata flashsignal signal TraceColor...
+        statush ROIpoint stabledata flashsignal signal TraceColor info...
         ROItext ROI Leftt Rightt hidef listboxtemp channelForAutoROI signalpoint...
         Rise Down DeltF_F0 MPD_amplitude FDHM FAHM Classf flg lsmdata Time
+    
+    if isfield(info,'TimeOffset')
+        Time=info.TimeOffset;
+    else
+        Time=1:r;
+    end
+    
     if r>1
 %         if count;return;end
         channelForAutoROI=inputdlg('input the channel for auto ROI','',1,{channelForAutoROI});
