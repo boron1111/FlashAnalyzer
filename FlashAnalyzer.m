@@ -5,11 +5,12 @@ function FlashAnalyzer
     global newpath1 f0 th Datacursort panel12 panel112 listboxtemp Play Stop Mergebutton ShowTrackerImage Show_mean...
         HideTrackerImage ShowTracker drawline hide hider hidef hideROI hideROIr hideROIf Rectanglt Segpolyt AutoROIp...
         Leftt Rightt ROIselection thresh listbox drawf trace slider threshold ptext statush timeh sliderB sliderC...
-        BCdata bits panel111 mapAll TraceColor channelcheckbox Time Pathname Filename newpathsavestatus channelForAutoROI...
+        BCdata bits panel111 mapAll TraceColor channelcheckbox Time Pathname Filename newpathsavestatus...
         newpathload_status xy info r rr rrchannel lastVal lastVal1 count currentflash ROI ROItext ROIpoint Rise Down...
         stabledata DeltF_F0 MPD_amplitude Classf flg FDHM FAHM flashsignal signalpoint lsmdata lsm_image signal hlabel...
         drawlinearray drawlinetextarray drawlinecount sto row col zstack h_R h_P h_D OverAllTraceTrace normal channel info_extend
     
+    if ishandle(f0);return;end
     newpath1='';
     f0 = figure('Visible','on','Menubar','none','Toolbar','none','Units','Normalized','Position',[0,0,1,0.95],'numbertitle','off','resize','on');
     set(f0,'name','Superoxide Flashes Detector','tag','figure1','color',[0.94,0.94,0.94])
@@ -314,7 +315,6 @@ function FlashAnalyzer
     jFrame=getJFrame(f0);
     jFrame.setMaximized(1);
     
-    channelForAutoROI='';
 end
 
 function ChangeColor(~,~)
@@ -2773,7 +2773,9 @@ function showImageWithFilename(~,~)
     global Filename panel112 panel111 listboxtemp Leftt Rightt ROIselection Rectanglt Segpolyt AutoROIp f0 signal count...
         ROIpoint stabledata currentflash flashsignal signalpoint Rise Down DeltF_F0 Classf flg ROI ROItext drawf...
         trace Pathname lsmdata info xy r row col zstack bits lsm_image info_extend channel channelcheckbox imAll...
-        lastVal1 rrchannel BCdata sliderB sliderC panel12 slider rr lastVal mapAll OverAllTraceTrace normal thresh th threshold
+        lastVal1 rrchannel BCdata sliderB sliderC panel12 slider rr lastVal mapAll OverAllTraceTrace normal thresh...
+        th threshold namecolor Time
+    
     set(Leftt,'enable','off');
     set(Rightt,'enable','off');
     set(ROIselection,'value',0);
@@ -2839,6 +2841,13 @@ function showImageWithFilename(~,~)
     info_extend=lsminf;
     channel=lsminf.NUMBER_OF_CHANNELS;
     namecolor=lsminf.ChannelColors.Names;
+    
+    if isfield(info,'TimeOffset')
+        Time=info.TimeOffset;
+    else
+        Time=1:r;
+    end
+
 %     toc
     if channel>1
         channelcheckbox=zeros(1,channel);
@@ -2978,11 +2987,12 @@ function sliderf(~,~)
 end
 
 function closereq(~,~)
+    global f0
 %         log.Pathname=Pathname;
 %         log.tag=get(findobj(panel2332,'style','pushbutton'),'tag');
 %         log.color=get(findobj(panel2332,'style','pushbutton'),'backgroundcolor');        
 %         save log.mat log
-    delete(gcf)
+    delete(f0)
     delete('lsm_image.mat')
 %     clear dara pf imag
 %     clear dra lsm_image map1 Playt ROIselection drawf.f1 Leftt Rightt map right left Analysist r1 c1 imag h stabledata ROI ROItext
@@ -2990,7 +3000,7 @@ function closereq(~,~)
 %     clear info hnoname auto panel1 panel11 panel12 panel13 panel21 panel_right_down panel23
 %     clear flashindex Rtime PeakA F0 deltF halfA halfT flg hlabelR hlabelP r 
 %     clear f sto rr Line Linetext Linecount Val1 Val2 fittingROI fittingcount ss stat parameters
-    clc
+%     clc
 %     pack
 
 end
@@ -3803,26 +3813,27 @@ end
 
 function autof(s,e)
     global f0 r channel drawf trace count currentflash imAll hideROIf...
-        statush ROIpoint stabledata flashsignal signal TraceColor info...
-        ROItext ROI Leftt Rightt hidef listboxtemp channelForAutoROI signalpoint...
+        statush ROIpoint stabledata flashsignal signal TraceColor...
+        ROItext ROI Leftt Rightt hidef listboxtemp signalpoint namecolor...
         Rise Down DeltF_F0 MPD_amplitude FDHM FAHM Classf flg lsmdata Time
     
-    if isfield(info,'TimeOffset')
-        Time=info.TimeOffset;
-    else
-        Time=1:r;
+    for id=1:length(namecolor)
+        if strcmp(namecolor{id},'Ch1-T1');cpYFPCh=id;end
+        if strcmp(namecolor{id},'Ch2-T2');TMRMCh=id;end
     end
-    
+    channelForAutoROI=num2str(TMRMCh);
+        
     if r>1
 %         if count;return;end
-        channelForAutoROI=inputdlg('input the channel for auto ROI','',1,{channelForAutoROI});
-        channelForAutoROI=channelForAutoROI{1};
+        channelForAutoROI1=inputdlg('input the channel for auto ROI','',1,{channelForAutoROI});
+        if isempty(channelForAutoROI1);return;end
+        channelForAutoROI=channelForAutoROI1{1};
         set(statush,'string','Busy')
         set(f0,'WindowButtonMotionFcn','')
         cla(trace.f3)
         % imAll是所有通道的时间序列平均值
         meanIm=imAll(:,:,str2double(channelForAutoROI));
-        [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,str2double(channelForAutoROI),r,channel);
+        [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,r,channel,[cpYFPCh TMRMCh]);
         ROItext=zeros(1,count);
         ROI=cell(1,count);
         stabledata=cell(count,6);
@@ -3895,6 +3906,7 @@ function autof(s,e)
     
     for id=1:count
         signal=flashsignal{id};
+        %bypass the trace analysis but form the parameters
         [ind,pea,base,basepea,down,downpea,RiseTime,DownTime,hd,ha]=traceAnalysis(ones(1,r),r,Time);
         s=signal{1};
         s=sort(s);
@@ -4166,103 +4178,107 @@ function batchf(~,~)
 end
 %}
 
-function AutoTotalf(~,~)
-    global info Time r th threshold statush f0 flashsignal ROI ROItext ROIpoint stabledata count...
-        signalpoint Rise Down Classf FDHM FAHM drawf trace DeltF_F0 flg lsmdata channel...
-        rr currentflash Leftt Rightt signal TraceColor hidef hideROIf mapAll
-    if isfield(info,'TimeOffset')
-        Time=info.TimeOffset;
-    else
-        Time=1:r;
-    end        
-    th=get(threshold,'string');
-    th=str2double(th);
-    if ~(th<0 ||th>255||isnan(th))
-        if r>1
-            set(statush,'string','Busy')
-            set(f0,'WindowButtonMotionFcn','')
-            ROI={};
-            ROItext=[];
-            currentflash=0;
-            FDHM={};
-            FAHM={};
-            cla(drawf.f2)
-            cla(drawf.f3)
-            cla(trace.f3)
-            pause(0.1)
-            [ROIpoint,stabledata,count,flashsignal,signalpoint Rise Down DeltF_F0 Classf flg]=autoTotalff(lsmdata,r,th,channel,Time);
-            imshow(uint8(lsmdata(rr).data{rrchannel},mapAll{rrchannel}./2^(bits-8)),'parent',drawf.f1)
-            if count
-                for i=1:count
-                    point=ROIpoint{i};
-                    xx=point.x;yy=point.y;
-                    hh=line('XData',xx,'YData', yy,'color',[1,1,1],'LineWidth',1,'parent',drawf.f3);
-                    h5=text(mean(xx),mean(yy),num2str(i),'Parent',drawf.f2);
-                    set(h5,'color',[0.8,0.8,0],'HorizontalAlignment','center')
-                    ROItext(i)=h5;
-                    ROI{i}=hh;
-                end
-                currentflash=count;
-                set(ROItext(currentflash),'color','r')
-                set(ROI{currentflash},'color','r')
-                if count>1
-                    set(Leftt,'enable','on');
-                    set(Rightt,'enable','off');
-                elseif count==1
-                    set(Leftt,'enable','off');
-                    set(Rightt,'enable','off');
-                end
-                signal=flashsignal{1};
-                cla(trace.f3)
-                h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
-                set(h,'buttondownfcn',@f0Downf);
-                if channel>1
-                    for j=2:channel
-                        hold(trace.f3,'on')
-                        plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
-                    end
-                end
-                hold(trace.f3,'off')
-                axis(trace.f3,'on')
-                set(trace.f3,'outerposition',[0,0,1,1])
+% function AutoTotalf(~,~)
+%{
+% function AutoTotalf(~,~)
+%     global info Time r th threshold statush f0 flashsignal ROI ROItext ROIpoint stabledata count...
+%         signalpoint Rise Down Classf FDHM FAHM drawf trace DeltF_F0 flg lsmdata channel...
+%         rr currentflash Leftt Rightt signal TraceColor hidef hideROIf mapAll
+%     if isfield(info,'TimeOffset')
+%         Time=info.TimeOffset;
+%     else
+%         Time=1:r;
+%     end        
+%     th=get(threshold,'string');
+%     th=str2double(th);
+%     if ~(th<0 ||th>255||isnan(th))
+%         if r>1
+%             set(statush,'string','Busy')
+%             set(f0,'WindowButtonMotionFcn','')
+%             ROI={};
+%             ROItext=[];
+%             currentflash=0;
+%             FDHM={};
+%             FAHM={};
+%             cla(drawf.f2)
+%             cla(drawf.f3)
+%             cla(trace.f3)
+%             pause(0.1)
+%             [ROIpoint,stabledata,count,flashsignal,signalpoint Rise Down DeltF_F0 Classf flg]=autoTotalff(lsmdata,r,th,channel,Time);
+%             imshow(uint8(lsmdata(rr).data{rrchannel},mapAll{rrchannel}./2^(bits-8)),'parent',drawf.f1)
+%             if count
+%                 for i=1:count
+%                     point=ROIpoint{i};
+%                     xx=point.x;yy=point.y;
+%                     hh=line('XData',xx,'YData', yy,'color',[1,1,1],'LineWidth',1,'parent',drawf.f3);
+%                     h5=text(mean(xx),mean(yy),num2str(i),'Parent',drawf.f2);
+%                     set(h5,'color',[0.8,0.8,0],'HorizontalAlignment','center')
+%                     ROItext(i)=h5;
+%                     ROI{i}=hh;
+%                 end
+%                 currentflash=count;
+%                 set(ROItext(currentflash),'color','r')
+%                 set(ROI{currentflash},'color','r')
+%                 if count>1
+%                     set(Leftt,'enable','on');
+%                     set(Rightt,'enable','off');
+%                 elseif count==1
+%                     set(Leftt,'enable','off');
+%                     set(Rightt,'enable','off');
+%                 end
+%                 signal=flashsignal{1};
+%                 cla(trace.f3)
+%                 h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
+%                 set(h,'buttondownfcn',@f0Downf);
+%                 if channel>1
+%                     for j=2:channel
+%                         hold(trace.f3,'on')
+%                         plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
+%                     end
+%                 end
+%                 hold(trace.f3,'off')
+%                 axis(trace.f3,'on')
+%                 set(trace.f3,'outerposition',[0,0,1,1])
+% 
+%                 status=get(hidef,'value');
+%                 if status==1
+%                     for i=1:count
+%                         set(ROItext(i),'visible','off')
+%                     end
+%                 end
+% 
+%                 status=get(hideROIf,'value');
+% 
+%                 if status==1
+%                     for i=1:count
+%                         set(ROItext(i),'visible','off')
+%                         set(ROI{i},'visible','off')
+%                     end
+%                 end
+% 
+%                 set(listboxtemp,'string',stabledata(:,1),'value',count);
+% 
+% %                     currentmark(s,e);
+%                 currentmark;
+%                 if currentflash>1
+%                     set(Leftt,'enable','on')
+%                     set(Rightt,'enable','off')
+%                 else
+%                     set(Leftt,'enable','off')
+%                     set(Rightt,'enable','off')
+%                 end
+% %                     recover(s,e);
+%                 recover;
+% 
+%             end
+% 
+%             set(statush,'string','Ready')
+%             pack
+%         end
+%     end
+% end
+%}
 
-                status=get(hidef,'value');
-                if status==1
-                    for i=1:count
-                        set(ROItext(i),'visible','off')
-                    end
-                end
-
-                status=get(hideROIf,'value');
-
-                if status==1
-                    for i=1:count
-                        set(ROItext(i),'visible','off')
-                        set(ROI{i},'visible','off')
-                    end
-                end
-
-                set(listboxtemp,'string',stabledata(:,1),'value',count);
-
-%                     currentmark(s,e);
-                currentmark;
-                if currentflash>1
-                    set(Leftt,'enable','on')
-                    set(Rightt,'enable','off')
-                else
-                    set(Leftt,'enable','off')
-                    set(Rightt,'enable','off')
-                end
-%                     recover(s,e);
-                recover;
-
-            end
-
-            set(statush,'string','Ready')
-            pack
-        end
-    end
-end
 function datacursoron(~,~)
     global Select
     datacursormode on
@@ -4289,187 +4305,42 @@ end
 %}
 
 function BatchAutomaticDrawROI(~,~)
-    global Pathname Filename
-%         批量画ROI
+    global Pathname Filename ROIpoint count flashsignal lsmdata r channel ...
+        imAll Time namecolor meanIm
     clc
-    if ~exist('newpath','var')||isempty(newpath)
-        newpath=cd;
-    elseif newpath==0
-        newpath=cd;
-    end
 
-    [filename, Pathname] = uigetfile({'*.tif;*.lsm;*.mat'},'select file',newpath,'MultiSelect','on');
-%         filename
-%         Pathname
+    [filename, pathname] = uigetfile({'*.lsm'},'select file',Pathname,'MultiSelect','on');
+    
     if ~iscell(filename)
         if filename==0
-            filename={};
+            return
         end
+        filename={filename};
     end
+    Pathname=pathname;
 
     if ~isempty(filename)
         if Pathname
-
-            mkdir(Pathname,'status_OverAll')
-%                 mkdir([Pathname,'\','status_OverAll'],'Peak')
-%                 mkdir([Pathname,'\','status_OverAll'],'NoPeak')
+            mkdir(Pathname,'AutoROI')
         end
-        newpath=Pathname;
-
-        hw1=waitbar(0,'ROI drawing,please wait...','name','Batch processing','CreateCancelBtn',@CancelFcn);
-        SetIcon(hw1);
-        movegui(hw1,'center');
-
-        pause(0.1)
-
-        if iscell(filename)
-            ll=length(filename);
-        else
-            ll=1;
-        end
-        steps = ll;
-
+        ll=length(filename);
         for ii=1:ll
-            if getappdata(hw1,'canceling')
-                delete(hw1)
-                break
-            end
-%                 flashsignal=[];
-%                 count=0;
-%                 ROIpoint={};
-%                 stabledata={};
-%                 flashindex=[];
-%                 flg=[];
-            if ~iscell(filename)
-                str=[Pathname,filename];
-                [~, name, ext] = fileparts(filename);
-                Filename=filename;
-            else
-                str=[Pathname,filename{ii}];
-                [~, name, ext] = fileparts(filename{ii});
-                Filename=filename{ii};
-            end
-
-% %                 if ~isempty(strfind(lower(name),'glu'))
-%                   if 1
-%                     if strcmp(ext,'.lsm')
-%                         lsm=tiffread(str);
-%                         info=lsm(1).lsm;
-%                         xy.VoxelSizeX=info.VoxelSizeX;
-%                         xy.VoxelSizeY=info.VoxelSizeY;
-%                         l=length(lsm);
-%                         
-%                         image=lsm(1).data;
-%                         if isa(image,'cell')
-%                             image=image{1};
-%                             [row,col]=size(image);
-%                             lsm_image=uint8(zeros(row,col,l));
-%                             if isa(image,'uint16')
-%                                 for i=1:l
-%                                     imag=lsm(i).data{1};
-%                                     imag=imresize(imag,[row,col]);
-%                                     imag=double(imag)/20;
-%                                     imag=uint8(imag);
-%                                     lsm_image(:,:,i)=imag;
-%                                 end
-%                             else
-%                                 for i=1:l
-%                                     imag=lsm(i).data{1};
-%                                     imag=imresize(imag,[row,col]);
-%                                     lsm_image(:,:,i)=imag;
-%                                 end
-%                             end
-%                         else
-%                             [row,col]=size(image);
-%                             lsm_image=uint8(zeros(row,col,l));
-%                             if isa(image,'uint16')
-%                                 for i=1:l
-%                                     imag=lsm(i).data;
-%                                     imag=imresize(imag,[row,col]);
-%                                     imag=double(imag)/20;
-%                                     imag=uint8(imag);
-%                                     lsm_image(:,:,i)=imag;
-%                                 end
-%                             else
-%                                 for i=1:l
-%                                     imag=lsm(i).data;
-%                                     imag=imresize(imag,[row,col]);
-%                                     lsm_image(:,:,i)=imag;
-%                                 end
-%                             end
-%                         end
-%                     elseif strcmp(ext,'.tif')
-%                         [lsm_image,info,xy]=tifread(str);
-%                     elseif strcmp(ext,'.mat')
-%                         status=load(str);
-%                         status=status.status;
-%                         lsm_image=status.image;
-%                         info=status.info;
-%                         xy=status.xy;
-%                     end
-%                     r=size(lsm_image,3);
-%                     
-%                     if r>10
-%                         flashsignal=[];
-%                         ROI={};
-%                         ROItext=[];
-%                         ROIpoint={};
-%                         stabledata={};
-%                         count=0;
-%                         currentflash=0;
-%                         signalpoint={};
-%                         Rise={};
-%                         Down={};
-%                         DeltF_F0={};
-%                         Classf=[];
-%                         flashindex=[];
-%                         [OverAllTraceClass,OverAllTrace,lsm_image,normal]=OverAllTraceAnalysis(lsm_image,r);
-%                         
-%                         currentflash=count;
-%                         map1=[zeros(256,1),(0:255)'/256,zeros(256,1)];
-%                         status.tag='Flash';
-%                         status.filename=name;
-%                         status.info=info;
-%                         status.xy=xy;
-%                         status.count=count;
-%                         status.OverAllTraceClass=OverAllTraceClass;
-%                         status.OverAllTrace=OverAllTrace;
-%                         status.currentflash=currentflash;
-%                         status.flashsignal=flashsignal;
-%                         status.image=lsm_image;
-%                         status.normal=normal;
-%                         status.map=map1;
-%                         status.stabledata=stabledata;
-%                         status.ROIpoint=ROIpoint;
-%                         status.Rise=Rise;
-%                         status.Down=Down;
-%                         status.DeltF_F0=DeltF_F0;
-%                         status.Classf=Classf;
-%                         status.flashindex=flashindex;
-%                         status.flg=flg;
-%                         status.signalpoint=signalpoint;
-%                         if OverAllTraceClass==1
-%                             save(strcat(Pathname,'status_OverAll\NoPeak\',name,'.mat'), 'status')
-%                         else
-%                             save(strcat(Pathname,'status_OverAll\Peak\',name,'.mat'), 'status')
-%                         end
-%                         pause(0.1)
-%                         cla(draw)
-%                         plot(draw,OverAllTrace,'color',[0,1,0],'LineWidth',2);
-%                     end
-%                 end
-%                 Filename
+            Filename=filename{ii}; 
             showImageWithFilename;
-            AutoTotalf
-            savestatusf;
-            waitbar(ii / steps,hw1)
-        end            
+            
+            for id=1:length(namecolor)
+                if strcmp(namecolor{id},'Ch1-T1');cpYFPCh=id;end
+                if strcmp(namecolor{id},'Ch2-T2');TMRMCh=id;end
+            end            
+            channelForAutoROI=num2str(TMRMCh);
+            
+            meanIm=imAll(:,:,str2double(channelForAutoROI));
+            [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,r,channel,[cpYFPCh TMRMCh]);
+            
+            save([Pathname,'AutoROI\',Filename(1:end-4),'.mat'],'ROIpoint','count','flashsignal','Time');
+            disp([num2str(ii),' / ',num2str(ll)])
+        end
     end
-
-    function CancelFcn(s,~)
-        delete(s);
-        error('In this case, the newline \n is not converted.')
-    end        
 end
 
 function ResetBC(~,~)

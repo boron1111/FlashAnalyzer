@@ -1,5 +1,5 @@
-function [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,channelForAutoROI,...
-    r,channel)
+function [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,...
+    r,channel,channels_analyze)
     % r是总帧数，channel是总通道数
 % tic
 
@@ -53,8 +53,7 @@ for id=1:n
     
     imCalMean{id}=ones(channel,r,sum(bw1(:)))*100;
     for id1=1:r
-%         for id2=1:channel
-        for id2=[1 3]
+        for id2=sort(channels_analyze)
             imCalMean{id}(id2,id1,:)=lsmdata(id1).data{id2}(bw1);
         end
     end
