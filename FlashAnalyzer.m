@@ -4337,7 +4337,7 @@ function BatchAutomaticDrawROI(~,~)
             meanIm=imAll(:,:,str2double(channelForAutoROI));
             [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,r,channel,[cpYFPCh TMRMCh]);
             
-            save([Pathname,'AutoROI\',Filename(1:end-4),'.mat'],'ROIpoint','count','flashsignal','Time');
+            save([Pathname,'AutoROI\',Filename(1:end-4),'.mat'],'ROIpoint','count','flashsignal','Time','namecolor');
             disp([num2str(ii),' / ',num2str(ll)])
         end
     end

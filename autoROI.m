@@ -3,6 +3,7 @@ function [ROIpoint count flashsignal]=autoROI(meanIm,lsmdata,...
     % r是总帧数，channel是总通道数
 % tic
 
+meanIm=imclearborder(meanIm,4);
 wb=waitbar(0);
 
 H=fspecial('average',20);
