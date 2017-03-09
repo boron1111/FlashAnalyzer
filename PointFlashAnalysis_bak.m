@@ -35,7 +35,7 @@ function [ind,pea,base,basepea,down,downpea,RiseTime,DownTime,hd,ha]=PointFlashA
     done=0;
     try
         while(done==0)
-            done=(signal(nn-n)-hal>=0&&signal(nn-n-1)-hal<=0||nn-n==1);
+            done=(sss(nn-n)-hal>=0&&sss(nn-n-1)-hal<=0||nn-n==1);
             n=n+1;
         end
     catch
@@ -47,7 +47,7 @@ function [ind,pea,base,basepea,down,downpea,RiseTime,DownTime,hd,ha]=PointFlashA
     
     try
         while(done==0)
-            done=(signal(nn+n)-hal>=0&&signal(nn+n+1)-hal<=0||nn+n==r);
+            done=(sss(nn+n)-hal>=0&&sss(nn+n+1)-hal<=0||nn+n==r);
             n=n+1;
         end
     catch

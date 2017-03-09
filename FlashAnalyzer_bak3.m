@@ -1,4 +1,5 @@
-function FlashAnalyzer(varargin)
+function FlashAnalyzer
+    clc
     % ROI是画出的ROI的线的句柄，ROIpoint是flash的参数和围成ROI的点，ROItext是标记ROI的数字的句柄，flashsignal是ROI的时间序列均值
     % drawf是图片显示的各层axes的句柄
     global newpath1 f0 th Datacursort panel12 panel112 listboxtemp Play Stop Mergebutton ShowTrackerImage Show_mean...
@@ -8,314 +9,312 @@ function FlashAnalyzer(varargin)
         newpathload_status xy info r rr rrchannel lastVal lastVal1 count currentflash ROI ROItext ROIpoint Rise Down...
         stabledata DeltF_F0 MPD_amplitude Classf flg FDHM FAHM flashsignal signalpoint lsmdata lsm_image signal hlabel...
         drawlinearray drawlinetextarray drawlinecount sto row col zstack h_R h_P h_D OverAllTraceTrace normal channel info_extend
-    if ~isempty(varargin)
-        eval(varargin{1});
-    else
-        clc
-        if ishandle(f0);return;end
-        newpath1='';
-        f0 = figure('Visible','on','Menubar','none','Toolbar','none','Units','Normalized','Position',[0,0,1,0.95],'numbertitle','off','resize','on');
-        set(f0,'name','Superoxide Flashes Detector','tag','figure1','color',[0.94,0.94,0.94])
-        warning off all;
-        SetIcon(f0);
-        th = uitoolbar(f0);
-
-    %      [Select,map]=imread('.\bitmaps\select.bmp');
-    %     Select=ind2rgb(Select,map);
-    %     Select= uitoggletool(th,'CData',Select,'TooltipString','Manual point','HandleVisibility','on','tag','Select');
-    %     set(Select,'OnCallback',@Selection)
-    %     set(Select,'OffCallback',@Selectionff)
-
-        Datacursort= uitoggletool(th,'CData',imread('.\bitmaps\data_cursor.bmp'),'TooltipString','Data_cursor','HandleVisibility','on');
-        set(Datacursort,'OnCallback',@datacursoron)
-        set(Datacursort,'OffCallback',@datacursoroff)
-
-        Show_mean=uitoggletool(th,'cdata',imread('.\bitmaps\show_mean.bmp'),'tooltipstring','show mean image','handlevisibility','on');
-        set(Show_mean,'OnCallback',@showMeanImage);
-
-        uipushtool(th,'cdata',imread('.\bitmaps\show_trace.bmp'),'tooltipstring','show trace','clickedcallback',@showTrace);
-
-        %     panel1左侧主面板
-        panel1=uipanel(f0,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0 0.6 1]);
-
-        panel11=uipanel(panel1,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0 1 0.15]);
-        panel12=uipanel(panel1,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0.15 1 0.85]);
-        panel111=uipanel(panel11,'Title','','FontSize',12,'BackgroundColor','white','units','Normalized','Position',[0 0 0.4 1]);
-        panel1111=uipanel(panel111,'Title','','FontSize',12,'BackgroundColor','white','units','Normalized','Position',[0 0.2 1 0.6]);
-
-        panel112=uipanel(panel11,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0.4 0 0.6 1]);
-        panel1121=uipanel(panel112,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0.2 1 0.6]); 
-
-
-         %     panel_right右侧主面板
-        panel_right=uipanel(f0,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0.6 0 0.4 1]);
-
-        %     panel_right_down是显示flash trace及按钮的面板    
-        panel_right_down=uipanel(panel_right,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0 1 1/3]);   
-        panel_flashTrace=uipanel(panel_right_down,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 1/4 1 3/4]);
-        %     panel_right_button是显示按钮的面板
-        panel_right_button=uipanel(panel_right_down,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0 1 1/4]);
-
-        %     panel_right_up是显示flashTrace list和file list的面板
-        panel_right_up=uipanel(panel_right,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 1/3 1 2/3]); 
-        %     panel231,panel232是显示overallTrace的面板
-
-        %   panel_fileList是显示文件列表的面板
-        panel_fileList=uipanel(panel_right_up,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[1/8 0 7/8 1]);
-
-        %   显示flash list的容器    
-        listboxtemp=uicontrol(panel_right_up,'style','listbox','units','Normalized','position',[0,0,1/8,1],'callback',@Table_Selection);
-
-        Save_Movie= uicontrol(panel1111,'style','pushbutton','CData',imread('.\bitmaps\movie.bmp'),'units','Normalized','position',[0,1/2,1/10,1/2],'TooltipString','Save movie','HandleVisibility','off');
-        set(Save_Movie,'Callback',@save_movie,'BusyAction','cancel')
-
-        Area= uicontrol(panel1111,'style','pushbutton','CData',imread('.\bitmaps\area.bmp'),'units','Normalized','position',[1/10,1/2,1/10,1/2],'TooltipString','Save current figure','HandleVisibility','off');
-        set(Area,'Callback',@areacacul,'BusyAction','cancel')
-
-        Play=imread('.\bitmaps\play.bmp');
-        Stop=imread('.\bitmaps\pause.bmp');
-        uicontrol(panel1111,'style','togglebutton','CData',Play,'units','Normalized','position',[2/10,1/2,1/10,1/2],'TooltipString','Play','callback',@Playf);
-
-        Mergebutton=uicontrol(panel1111,'style','togglebutton','CData',imread('.\bitmaps\merge.bmp'),'units','Normalized','position',[3/10,1/2,1/10,1/2],'TooltipString','Merge','callback',@adjustBC); 
-
-        [ShowTrackerImage,map]=imread('.\bitmaps\switch_up.bmp');
-        ShowTrackerImage=ind2rgb(ShowTrackerImage,map);
-        [HideTrackerImage,map]=imread('.\bitmaps\switch_down.bmp');
-        HideTrackerImage=ind2rgb(HideTrackerImage,map);
-        ShowTracker= uicontrol(panel1111,'style','togglebutton','CData',ShowTrackerImage,'units','Normalized','position',[4/10,1/2,1/10,1/2],'TooltipString','Show Tracker','HandleVisibility','off');
-        set(ShowTracker,'Callback',{@ShowTrackerf})
-
-        [framedelete,~]=imread('.\bitmaps\deletebad.bmp');
-        framedelete= uicontrol(panel1111,'style','pushbutton','CData',framedelete,'units','Normalized','position',[5/10,1/2,1/10,1/2],'TooltipString','Delete bad frame','HandleVisibility','off');
-        set(framedelete,'Callback',@framedeletef,'BusyAction','cancel') 
-
-        [drawline,map]=imread('.\bitmaps\line.bmp');
-        drawline=ind2rgb(drawline,map);
-        drawline=uicontrol(panel1111,'style','pushbutton','CData',drawline,'units','Normalized','position',[6/10,1/2,1/10,1/2],'TooltipString','Draw line','HandleVisibility','on');
-        set(drawline,'Callback',@drawlinef)
-
-        [deleteline,map]=imread('.\bitmaps\linedelete.bmp');
-        deleteline=ind2rgb(deleteline,map);
-        uicontrol(panel1111,'style','pushbutton','units','Normalized','position',[7/10,1/2,1/10,1/2],'TooltipString','Delete line','CData',deleteline,'visible','on','enable','on','Callback',@deletelinef);
-
-        [hide,map]=imread('.\bitmaps\HideLabel.bmp');
-        hide=ind2rgb(hide,map);
-        [hider,map]=imread('.\bitmaps\text.bmp');
-        hider=ind2rgb(hider,map);
-        hidef=uicontrol(panel1111,'style','togglebutton','TooltipString','Hide Label','CData',hide,'units','Normalized','position',[8/10,1/2,1/10,1/2],'visible','on','Callback',@hideon);
-
-        [hideROI,map]=imread('.\bitmaps\HideROI.bmp');
-        hideROI=ind2rgb(hideROI,map);
-        [hideROIr,map]=imread('.\bitmaps\segpoly_active.bmp');
-        hideROIr=ind2rgb(hideROIr,map);
-        hideROIf=uicontrol(panel1111,'style','togglebutton','TooltipString','Hide ROI','CData',hideROI,'units','Normalized','position',[9/10,1/2,1/10,1/2],'visible','on','Callback',@hideROIon);
-
-        [Rectangl,map]=imread('.\bitmaps\rectangl.bmp');
-        Rectangl=ind2rgb(Rectangl,map);
-        Rectanglt= uicontrol(panel1111,'style','togglebutton','CData',Rectangl,'units','Normalized','position',[0,0,1/10,1/2],'TooltipString','Rectangle','HandleVisibility','off');
-        set(Rectanglt,'Callback',@retangle,'BusyAction','cancel')
-
-        [Segpoly,map]=imread('.\bitmaps\segpoly.bmp');
-        Segpoly=ind2rgb(Segpoly,map);
-        Segpolyt= uicontrol(panel1111,'style','togglebutton','CData',Segpoly,'units','Normalized','position',[1/10,0,1/10,1/2],'TooltipString','Polygon','HandleVisibility','off');
-        set(Segpolyt,'Callback',@poly,'BusyAction','cancel')
-
-        [AutoROI,map]=imread('.\bitmaps\gears.bmp');
-        AutoROI=ind2rgb(AutoROI,map);
-        uicontrol(panel1111,'style','pushbutton','TooltipString','automatic ROI','CData',AutoROI,'units','Normalized','position',[2/10,0,1/10,1/2],'visible','on','callback',@autof,'BusyAction','cancel');
-        %用于在分离线粒体上自动ROI
-
-        [AutoROIp,map]=imread('.\bitmaps\gearsROI.bmp');
-        AutoROIp=ind2rgb(AutoROIp,map);
-    %     AutoROIp=uicontrol(panel1111,'style','togglebutton','TooltipString','Local automatic point detection','CData',AutoROIp,'units','Normalized','position',[3/10,0,1/10,1/2],'visible','on');  
-    %     set(AutoROIp,'Callback',@autoROIfp);  
-        AutoROIp=uicontrol(panel1111,'style','togglebutton','TooltipString','Batch automatic Draw ROI','CData',AutoROIp,'units','Normalized','position',[3/10,0,1/10,1/2],'visible','on');  
-        set(AutoROIp,'Callback',@BatchAutomaticDrawROI); 
-
-        [AutoTotal,map]=imread('.\bitmaps\group.bmp');
-        AutoTotal=ind2rgb(AutoTotal,map);
-        AutoTotal=uicontrol(panel1111,'style','togglebutton','TooltipString','Automatic detection of whole cell','CData',AutoTotal,'units','Normalized','position',[4/10,0,1/10,1/2],'visible','on');  
-        set(AutoTotal,'Callback',@AutoTotalf);     
-
-        [Delete,map]=imread('.\bitmaps\delete.bmp');
-        Delete=ind2rgb(Delete,map);
-        uicontrol(panel1111,'style','pushbutton','TooltipString','Delete current ROI','CData',Delete,'units','Normalized','position',[5/10,0,1/10,1/2],'visible','on','Callback',@deletthis);
-
-        [Deletem,map]=imread('.\bitmaps\DeleteManualROI.bmp');
-        Deletem=ind2rgb(Deletem,map);
-        uicontrol(panel1111,'style','pushbutton','TooltipString','Delete All ROI','CData',Deletem,'units','Normalized','position',[6/10,0,1/10,1/2],'visible','on','Callback',@delet,'BusyAction','cancel');
-
-        [left,map]=imread('.\bitmaps\shift_left.bmp');
-        left=ind2rgb(left,map);
-        Leftt=uicontrol(panel1111,'style','pushbutton','TooltipString','Previous ROI','CData',left,'units','Normalized','position',[7/10,0,1/10,1/2],'visible','on','enable','off','Callback',@leftf);
-
-        [right,map]=imread('.\bitmaps\shift_right.bmp');
-        right=ind2rgb(right,map);
-        Rightt=uicontrol(panel1111,'style','pushbutton','TooltipString','Next ROI','CData',right,'units','Normalized','position',[8/10,0,1/10,1/2],'visible','on','enable','off','Callback',@rightf);
-
-        [ROIselection,map]=imread('.\bitmaps\arrow.bmp');
-        ROIselection=ind2rgb(ROIselection,map);
-        ROIselection=uicontrol(panel1111,'style','togglebutton','TooltipString','ROIselection','CData',ROIselection,'units','Normalized','position',[9/10,0,1/10,1/2],'visible','on','Callback',@ROIselectionf);
-
-    %     [Open,map]=imread('.\bitmaps\open.bmp');
-    %     Open=ind2rgb(Open,map);
-    %     Opent= uicontrol(panel_right_button,'style','pushbutton','CData',Open,'units','Normalized','position',[0/15,1/4,1/15,1/2],'TooltipString','select directory','HandleVisibility','off');
-    %   Opent选择要打开文件的路径
-        Opent= uicontrol(panel_right_button,'style','pushbutton','String','Dir','units','Normalized','position',[0/15,1/4,1/15,1/2],'TooltipString','select directory','HandleVisibility','off');
-        set(Opent,'Callback',@Openfile)
-
-        [Save,map]=imread('.\bitmaps\save.bmp');
-        Save=ind2rgb(Save,map);
-    %   savet保存flash参数分析的结果
-        Savet= uicontrol(panel_right_button,'style','pushbutton','CData',Save,'units','Normalized','position',[1/15,1/4,1/15,1/2],'TooltipString','Save flash parameters','HandleVisibility','off');
-        set(Savet,'Callback',@savef)
-
-        [Load_Status,map]=imread('.\bitmaps\importd.bmp');
-        Load_Status=ind2rgb(Load_Status,map);
-        Load_Statust= uicontrol(panel_right_button,'style','pushbutton','CData',Load_Status,'units','Normalized','position',[2/15,1/4,1/15,1/2],'TooltipString','Load status','HandleVisibility','off');
-        set(Load_Statust,'callback',@load_status)
-
-        [Save_Status,map]=imread('.\bitmaps\importf.bmp');
-        Save_Status=ind2rgb(Save_Status,map);
-        Save_Statust= uicontrol(panel_right_button,'style','pushbutton','CData',Save_Status,'units','Normalized','position',[3/15,1/4,1/15,1/2],'TooltipString','Save status','HandleVisibility','off');
-        set(Save_Statust,'Callback',@savestatusf)
-
-        uicontrol(panel_right_button,'style','popup','String','batch to excel|Current trace|OverAll trace','FontSize',12,'units','Normalized','position',[4/15,1/4,2/15,1/2],'TooltipString','Save to Excel','HandleVisibility','off','Callback',@savetracef);
-
-        ResetBCbutton=uicontrol(panel_right_button,'style','pushbutton','string','RestBC','TooltipString','Reset brightness and contrast','units','normalized','position',[6/15,1/4,1/15,1/2]);
-        set(ResetBCbutton,'callback',@ResetBC); 
-        openFLbutton=uicontrol(panel_right_button,'style','pushbutton','string','openFL','TooltipString','Open file with filename list','units','normalized','position',[7/15,1/4,1/15,1/2]);
-        set(openFLbutton,'callback',@openFL);
-
-        thresh=uicontrol(panel_right_button,'style','edit','units','normalized','position',[8/15,1/4,4/15,1/2],'string','20','callback',@totaltracef);
-
-        uicontrol(panel_right_button,'style','text','units','normalized','position',[8/15,2/3,15/15,1/3],'string','Background threshold','HorizontalAlignment','left');
-        uicontrol(panel_right_button,'style','pushbutton','string','SetColor','TooltipString','Set color','units','normalized','position',[12/15,1/4,1/15,1/2],'callback',@ChangeColor);
-    %     log=load('log.mat');
-    %     log=log.log;
-
-    %     显示文件列表的列表框
-        listbox=uicontrol(panel_fileList,'style','listbox','units','Normalized','position',[0,0,1,1],'callback',@listboxf);
-
-
-        drawf.f1=axes('Parent',panel12,'units','Normalized','Position',[0,0,1,1],'xtick',[],'ytick',[]...
-            ,'xcolor',[0.94,0.94,0.94],'ycolor',[0.94,0.94,0.94],'drawmode','fast');
-        drawf.f2=axes('Parent',panel12,'units','Normalized','Position',[0,0,1,1],'xtick',[],'ytick',[]...
-            ,'xcolor',[0.94,0.94,0.94],'ycolor',[0.94,0.94,0.94],'drawmode','fast');
-        axis ij 
-        drawf.f3=axes('Parent',panel12,'units','Normalized','Position',[0,0,1,1],'xtick',[],'ytick',[]...
-            ,'xcolor',[0.94,0.94,0.94],'ycolor',[0.94,0.94,0.94],'drawmode','fast');
-        axis ij 
-        drawf.f4=axes('Parent',panel12,'units','Normalized','Position',[0,0,1,1],'xtick',[],'ytick',[]...
-            ,'xcolor',[0.94,0.94,0.94],'ycolor',[0.94,0.94,0.94],'drawmode','fast');
-        axis ij 
-
-        set(drawf.f2,'color','none','XLimMode','manual')
-        set(drawf.f3,'color','none','XLimMode','manual')
-        set(drawf.f4,'color','none','XLimMode','manual')
-
-    %  trace.f3是flash的trace
-        trace.f3=axes('Parent',panel_flashTrace,'units','Normalized','Position',[0,0,1,1],'xtick',[],'ytick',[]...
-            ,'xcolor',[0.94,0.94,0.94],'ycolor',[0.94,0.94,0.94],'drawmode','fast');
-
-        slider=uicontrol(panel1121,'style','slider','units','Normalized','position',[0,1/3,1,2/3],'enable','off');
-        threshold=uicontrol(panel1121,'style','edit','String','','units','Normalized','FontSize',10,'position',[0,0,1/8,1/3]);
-        ptext=uicontrol(panel1121,'style','text','String','','units','Normalized','FontSize',10,'position',[1/8,0,5/4,1/3]);
-        statush=uicontrol(panel1121,'style','text','String','Ready','units','Normalized','FontSize',10,'position',[3/4,0,1/8,1/3]);
-        timeh=uicontrol(panel1121,'style','text','String','','units','Normalized','FontSize',10,'position',[7/8,0,1/8,1/3]);
-
-        hJScrollBar = findjobj(slider);
-        hJScrollBar.AdjustmentValueChangedCallback = @sliderf;
-    %     set(slider,'callback',@sliderf)
-
-        sliderB=uicontrol(panel111,'style','slider','units','Normalized','position',[0,0,0.5,0.2],'enable','on','max',1,'min',-1,'value',0,'sliderstep',[0.02,0.2],'callback',@adjustBC);% Brightness correction
-        sliderC=uicontrol(panel111,'style','slider','units','Normalized','position',[0.5,0,0.5,0.2],'enable','on','max',1,'min',-1,'value',0,'sliderstep',[0.02,0.2],'callback',@adjustBC);% Contrast correction
-        BCdata=[];
-
-        bits=8;
-
-    %   Green, Red, Gray
-    %     mapAll={[zeros(256,1),(0:255)'/255,zeros(256,1)],...
-    %                 [(0:255)'/255,zeros(256,1),zeros(256,1)],...
-    %                 [(0:255)'/255,(0:255)'/255,(0:255)'/255]};
-    %     TraceColor={[0,1,0],[1,0,0],[0.5,0.5,0.5]};
-
-
-    %   Green, Gray, Gray, Gray
-
-        mapAll={[zeros(256,1),(0:255)'/255,zeros(256,1)],...
-                    [(0:255)'/255,(0:255)'/255,(0:255)'/255],...
-                    [(0:255)'/255,(0:255)'/255,(0:255)'/255],...
-                    [(0:255)'/255,(0:255)'/255,(0:255)'/255]};
-
-        TraceColor={[0,1,0],[0.5,0.5,0.5],[1,1,1],[1,1,1]};
-
-
-
-        channelcheckbox=[];
-
-        Time=[];
-    %     Pathname=log.Pathname;
-        Pathname='D:\lsm';
-        newpathsavestatus='';
-        newpathload_status='';
-        xy=[];
-        info='';
-        r=0;
-        rr=0;
-        rrchannel=0;
-        lastVal=0;
-        lastVal1=0;
-        count=0;
-        currentflash=0;
-        ROI={};
-        ROItext=[];
-        ROIpoint={};
-        Rise={};
-        Down={};
-        stabledata={};
-        DeltF_F0={};
-        MPD_amplitude={};
-        Classf=[];
-        flg=[];
-        FDHM={};
-        FAHM={};
-        flashsignal={};
-        signalpoint={};
-    %     flashindex=[]
-        lsmdata=[];
-        lsm_image=[];
-        signal={};
-        hlabel=line('xdata',[0,1],'ydata',[0,1],'color','r','parent',trace.f3,'visible','off');
-
-        drawlinearray=[];
-        drawlinetextarray=[];
-        drawlinecount=0;
-
-        sto=1;
-        row=0;
-        col=0;
-        zstack=1;
-
-
-        h_R=[];
-        h_P=[];
-        h_D=[];
-
-        OverAllTraceTrace=[];
-        normal=[];
-
-        channel=[];
-        info_extend=[];
-        Filename={};
-
-        set(f0,'resizefcn',@resizef)
-        set(f0,'windowbuttonmotionfcn',@windowmotionf)
-        set(f0,'CloseRequestFcn',@closereq)
-
-        jFrame=getJFrame(f0);
-        jFrame.setMaximized(1);
-    end
+    
+    if ishandle(f0);return;end
+    newpath1='';
+    f0 = figure('Visible','on','Menubar','none','Toolbar','none','Units','Normalized','Position',[0,0,1,0.95],'numbertitle','off','resize','on');
+    set(f0,'name','Superoxide Flashes Detector','tag','figure1','color',[0.94,0.94,0.94])
+    warning off all;
+    SetIcon(f0);
+    th = uitoolbar(f0);
+    
+%      [Select,map]=imread('.\bitmaps\select.bmp');
+%     Select=ind2rgb(Select,map);
+%     Select= uitoggletool(th,'CData',Select,'TooltipString','Manual point','HandleVisibility','on','tag','Select');
+%     set(Select,'OnCallback',@Selection)
+%     set(Select,'OffCallback',@Selectionff)
+    
+    Datacursort= uitoggletool(th,'CData',imread('.\bitmaps\data_cursor.bmp'),'TooltipString','Data_cursor','HandleVisibility','on');
+    set(Datacursort,'OnCallback',@datacursoron)
+    set(Datacursort,'OffCallback',@datacursoroff)
+    
+    Show_mean=uitoggletool(th,'cdata',imread('.\bitmaps\show_mean.bmp'),'tooltipstring','show mean image','handlevisibility','on');
+    set(Show_mean,'OnCallback',@showMeanImage);
+    
+    uipushtool(th,'cdata',imread('.\bitmaps\show_trace.bmp'),'tooltipstring','show trace','clickedcallback',@showTrace);
+    
+    %     panel1左侧主面板
+    panel1=uipanel(f0,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0 0.6 1]);
+   
+    panel11=uipanel(panel1,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0 1 0.15]);
+    panel12=uipanel(panel1,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0.15 1 0.85]);
+    panel111=uipanel(panel11,'Title','','FontSize',12,'BackgroundColor','white','units','Normalized','Position',[0 0 0.4 1]);
+    panel1111=uipanel(panel111,'Title','','FontSize',12,'BackgroundColor','white','units','Normalized','Position',[0 0.2 1 0.6]);
+    
+    panel112=uipanel(panel11,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0.4 0 0.6 1]);
+    panel1121=uipanel(panel112,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0.2 1 0.6]); 
+    
+    
+     %     panel_right右侧主面板
+    panel_right=uipanel(f0,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0.6 0 0.4 1]);
+   
+    %     panel_right_down是显示flash trace及按钮的面板    
+    panel_right_down=uipanel(panel_right,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0 1 1/3]);   
+    panel_flashTrace=uipanel(panel_right_down,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 1/4 1 3/4]);
+    %     panel_right_button是显示按钮的面板
+    panel_right_button=uipanel(panel_right_down,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0 1 1/4]);
+    
+    %     panel_right_up是显示flashTrace list和file list的面板
+    panel_right_up=uipanel(panel_right,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 1/3 1 2/3]); 
+    %     panel231,panel232是显示overallTrace的面板
+
+    %   panel_fileList是显示文件列表的面板
+    panel_fileList=uipanel(panel_right_up,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[1/8 0 7/8 1]);
+      
+    %   显示flash list的容器    
+    listboxtemp=uicontrol(panel_right_up,'style','listbox','units','Normalized','position',[0,0,1/8,1],'callback',@Table_Selection);
+         
+    Save_Movie= uicontrol(panel1111,'style','pushbutton','CData',imread('.\bitmaps\movie.bmp'),'units','Normalized','position',[0,1/2,1/10,1/2],'TooltipString','Save movie','HandleVisibility','off');
+    set(Save_Movie,'Callback',@save_movie,'BusyAction','cancel')
+
+    Area= uicontrol(panel1111,'style','pushbutton','CData',imread('.\bitmaps\area.bmp'),'units','Normalized','position',[1/10,1/2,1/10,1/2],'TooltipString','Save current figure','HandleVisibility','off');
+    set(Area,'Callback',@areacacul,'BusyAction','cancel')
+    
+    Play=imread('.\bitmaps\play.bmp');
+    Stop=imread('.\bitmaps\pause.bmp');
+    uicontrol(panel1111,'style','togglebutton','CData',Play,'units','Normalized','position',[2/10,1/2,1/10,1/2],'TooltipString','Play','callback',@Playf);
+        
+    Mergebutton=uicontrol(panel1111,'style','togglebutton','CData',imread('.\bitmaps\merge.bmp'),'units','Normalized','position',[3/10,1/2,1/10,1/2],'TooltipString','Merge','callback',@adjustBC); 
+
+    [ShowTrackerImage,map]=imread('.\bitmaps\switch_up.bmp');
+    ShowTrackerImage=ind2rgb(ShowTrackerImage,map);
+    [HideTrackerImage,map]=imread('.\bitmaps\switch_down.bmp');
+    HideTrackerImage=ind2rgb(HideTrackerImage,map);
+    ShowTracker= uicontrol(panel1111,'style','togglebutton','CData',ShowTrackerImage,'units','Normalized','position',[4/10,1/2,1/10,1/2],'TooltipString','Show Tracker','HandleVisibility','off');
+    set(ShowTracker,'Callback',{@ShowTrackerf})
+    
+    [framedelete,~]=imread('.\bitmaps\deletebad.bmp');
+    framedelete= uicontrol(panel1111,'style','pushbutton','CData',framedelete,'units','Normalized','position',[5/10,1/2,1/10,1/2],'TooltipString','Delete bad frame','HandleVisibility','off');
+    set(framedelete,'Callback',@framedeletef,'BusyAction','cancel') 
+    
+    [drawline,map]=imread('.\bitmaps\line.bmp');
+    drawline=ind2rgb(drawline,map);
+    drawline=uicontrol(panel1111,'style','pushbutton','CData',drawline,'units','Normalized','position',[6/10,1/2,1/10,1/2],'TooltipString','Draw line','HandleVisibility','on');
+    set(drawline,'Callback',@drawlinef)
+    
+    [deleteline,map]=imread('.\bitmaps\linedelete.bmp');
+    deleteline=ind2rgb(deleteline,map);
+    uicontrol(panel1111,'style','pushbutton','units','Normalized','position',[7/10,1/2,1/10,1/2],'TooltipString','Delete line','CData',deleteline,'visible','on','enable','on','Callback',@deletelinef);
+
+    [hide,map]=imread('.\bitmaps\HideLabel.bmp');
+    hide=ind2rgb(hide,map);
+    [hider,map]=imread('.\bitmaps\text.bmp');
+    hider=ind2rgb(hider,map);
+    hidef=uicontrol(panel1111,'style','togglebutton','TooltipString','Hide Label','CData',hide,'units','Normalized','position',[8/10,1/2,1/10,1/2],'visible','on','Callback',@hideon);
+    
+    [hideROI,map]=imread('.\bitmaps\HideROI.bmp');
+    hideROI=ind2rgb(hideROI,map);
+    [hideROIr,map]=imread('.\bitmaps\segpoly_active.bmp');
+    hideROIr=ind2rgb(hideROIr,map);
+    hideROIf=uicontrol(panel1111,'style','togglebutton','TooltipString','Hide ROI','CData',hideROI,'units','Normalized','position',[9/10,1/2,1/10,1/2],'visible','on','Callback',@hideROIon);
+
+    [Rectangl,map]=imread('.\bitmaps\rectangl.bmp');
+    Rectangl=ind2rgb(Rectangl,map);
+    Rectanglt= uicontrol(panel1111,'style','togglebutton','CData',Rectangl,'units','Normalized','position',[0,0,1/10,1/2],'TooltipString','Rectangle','HandleVisibility','off');
+    set(Rectanglt,'Callback',@retangle,'BusyAction','cancel')
+
+    [Segpoly,map]=imread('.\bitmaps\segpoly.bmp');
+    Segpoly=ind2rgb(Segpoly,map);
+    Segpolyt= uicontrol(panel1111,'style','togglebutton','CData',Segpoly,'units','Normalized','position',[1/10,0,1/10,1/2],'TooltipString','Polygon','HandleVisibility','off');
+    set(Segpolyt,'Callback',@poly,'BusyAction','cancel')
+    
+    [AutoROI,map]=imread('.\bitmaps\gears.bmp');
+    AutoROI=ind2rgb(AutoROI,map);
+    uicontrol(panel1111,'style','pushbutton','TooltipString','automatic ROI','CData',AutoROI,'units','Normalized','position',[2/10,0,1/10,1/2],'visible','on','callback',@autof,'BusyAction','cancel');
+    %用于在分离线粒体上自动ROI
+    
+    [AutoROIp,map]=imread('.\bitmaps\gearsROI.bmp');
+    AutoROIp=ind2rgb(AutoROIp,map);
+%     AutoROIp=uicontrol(panel1111,'style','togglebutton','TooltipString','Local automatic point detection','CData',AutoROIp,'units','Normalized','position',[3/10,0,1/10,1/2],'visible','on');  
+%     set(AutoROIp,'Callback',@autoROIfp);  
+    AutoROIp=uicontrol(panel1111,'style','togglebutton','TooltipString','Batch automatic Draw ROI','CData',AutoROIp,'units','Normalized','position',[3/10,0,1/10,1/2],'visible','on');  
+    set(AutoROIp,'Callback',@BatchAutomaticDrawROI); 
+    
+    [AutoTotal,map]=imread('.\bitmaps\group.bmp');
+    AutoTotal=ind2rgb(AutoTotal,map);
+    AutoTotal=uicontrol(panel1111,'style','togglebutton','TooltipString','Automatic detection of whole cell','CData',AutoTotal,'units','Normalized','position',[4/10,0,1/10,1/2],'visible','on');  
+    set(AutoTotal,'Callback',@AutoTotalf);     
+    
+    [Delete,map]=imread('.\bitmaps\delete.bmp');
+    Delete=ind2rgb(Delete,map);
+    uicontrol(panel1111,'style','pushbutton','TooltipString','Delete current ROI','CData',Delete,'units','Normalized','position',[5/10,0,1/10,1/2],'visible','on','Callback',@deletthis);
+    
+    [Deletem,map]=imread('.\bitmaps\DeleteManualROI.bmp');
+    Deletem=ind2rgb(Deletem,map);
+    uicontrol(panel1111,'style','pushbutton','TooltipString','Delete All ROI','CData',Deletem,'units','Normalized','position',[6/10,0,1/10,1/2],'visible','on','Callback',@delet,'BusyAction','cancel');
+    
+    [left,map]=imread('.\bitmaps\shift_left.bmp');
+    left=ind2rgb(left,map);
+    Leftt=uicontrol(panel1111,'style','pushbutton','TooltipString','Previous ROI','CData',left,'units','Normalized','position',[7/10,0,1/10,1/2],'visible','on','enable','off','Callback',@leftf);
+   
+    [right,map]=imread('.\bitmaps\shift_right.bmp');
+    right=ind2rgb(right,map);
+    Rightt=uicontrol(panel1111,'style','pushbutton','TooltipString','Next ROI','CData',right,'units','Normalized','position',[8/10,0,1/10,1/2],'visible','on','enable','off','Callback',@rightf);
+    
+    [ROIselection,map]=imread('.\bitmaps\arrow.bmp');
+    ROIselection=ind2rgb(ROIselection,map);
+    ROIselection=uicontrol(panel1111,'style','togglebutton','TooltipString','ROIselection','CData',ROIselection,'units','Normalized','position',[9/10,0,1/10,1/2],'visible','on','Callback',@ROIselectionf);
+    
+%     [Open,map]=imread('.\bitmaps\open.bmp');
+%     Open=ind2rgb(Open,map);
+%     Opent= uicontrol(panel_right_button,'style','pushbutton','CData',Open,'units','Normalized','position',[0/15,1/4,1/15,1/2],'TooltipString','select directory','HandleVisibility','off');
+%   Opent选择要打开文件的路径
+    Opent= uicontrol(panel_right_button,'style','pushbutton','String','Dir','units','Normalized','position',[0/15,1/4,1/15,1/2],'TooltipString','select directory','HandleVisibility','off');
+    set(Opent,'Callback',@Openfile)
+    
+    [Save,map]=imread('.\bitmaps\save.bmp');
+    Save=ind2rgb(Save,map);
+%   savet保存flash参数分析的结果
+    Savet= uicontrol(panel_right_button,'style','pushbutton','CData',Save,'units','Normalized','position',[1/15,1/4,1/15,1/2],'TooltipString','Save flash parameters','HandleVisibility','off');
+    set(Savet,'Callback',@savef)
+    
+    [Load_Status,map]=imread('.\bitmaps\importd.bmp');
+    Load_Status=ind2rgb(Load_Status,map);
+    Load_Statust= uicontrol(panel_right_button,'style','pushbutton','CData',Load_Status,'units','Normalized','position',[2/15,1/4,1/15,1/2],'TooltipString','Load status','HandleVisibility','off');
+    set(Load_Statust,'callback',@load_status)
+    
+    [Save_Status,map]=imread('.\bitmaps\importf.bmp');
+    Save_Status=ind2rgb(Save_Status,map);
+    Save_Statust= uicontrol(panel_right_button,'style','pushbutton','CData',Save_Status,'units','Normalized','position',[3/15,1/4,1/15,1/2],'TooltipString','Save status','HandleVisibility','off');
+    set(Save_Statust,'Callback',@savestatusf)
+    
+    uicontrol(panel_right_button,'style','popup','String','batch to excel|Current trace|OverAll trace','FontSize',12,'units','Normalized','position',[4/15,1/4,2/15,1/2],'TooltipString','Save to Excel','HandleVisibility','off','Callback',@savetracef);
+    
+    ResetBCbutton=uicontrol(panel_right_button,'style','pushbutton','string','RestBC','TooltipString','Reset brightness and contrast','units','normalized','position',[6/15,1/4,1/15,1/2]);
+    set(ResetBCbutton,'callback',@ResetBC); 
+    openFLbutton=uicontrol(panel_right_button,'style','pushbutton','string','openFL','TooltipString','Open file with filename list','units','normalized','position',[7/15,1/4,1/15,1/2]);
+    set(openFLbutton,'callback',@openFL);
+      
+    thresh=uicontrol(panel_right_button,'style','edit','units','normalized','position',[8/15,1/4,4/15,1/2],'string','20','callback',@totaltracef);
+    
+    uicontrol(panel_right_button,'style','text','units','normalized','position',[8/15,2/3,15/15,1/3],'string','Background threshold','HorizontalAlignment','left');
+    uicontrol(panel_right_button,'style','pushbutton','string','SetColor','TooltipString','Set color','units','normalized','position',[12/15,1/4,1/15,1/2],'callback',@ChangeColor);
+    uicontrol(panel_right_button,'style','pushbutton','string','ManPara','tooltipstring','Manual set flash parameter points','units','normalized','position',[13/15,1/4,1/15,1/2],'callback',@manualPara);
+%     log=load('log.mat');
+%     log=log.log;
+
+%     显示文件列表的列表框
+    listbox=uicontrol(panel_fileList,'style','listbox','units','Normalized','position',[0,0,1,1],'callback',@listboxf);
+
+    
+    drawf.f1=axes('Parent',panel12,'units','Normalized','Position',[0,0,1,1],'xtick',[],'ytick',[]...
+        ,'xcolor',[0.94,0.94,0.94],'ycolor',[0.94,0.94,0.94],'drawmode','fast');
+    drawf.f2=axes('Parent',panel12,'units','Normalized','Position',[0,0,1,1],'xtick',[],'ytick',[]...
+        ,'xcolor',[0.94,0.94,0.94],'ycolor',[0.94,0.94,0.94],'drawmode','fast');
+    axis ij 
+    drawf.f3=axes('Parent',panel12,'units','Normalized','Position',[0,0,1,1],'xtick',[],'ytick',[]...
+        ,'xcolor',[0.94,0.94,0.94],'ycolor',[0.94,0.94,0.94],'drawmode','fast');
+    axis ij 
+    drawf.f4=axes('Parent',panel12,'units','Normalized','Position',[0,0,1,1],'xtick',[],'ytick',[]...
+        ,'xcolor',[0.94,0.94,0.94],'ycolor',[0.94,0.94,0.94],'drawmode','fast');
+    axis ij 
+    
+    set(drawf.f2,'color','none','XLimMode','manual')
+    set(drawf.f3,'color','none','XLimMode','manual')
+    set(drawf.f4,'color','none','XLimMode','manual')
+    
+%  trace.f3是flash的trace
+    trace.f3=axes('Parent',panel_flashTrace,'units','Normalized','Position',[0,0,1,1],'xtick',[],'ytick',[]...
+        ,'xcolor',[0.94,0.94,0.94],'ycolor',[0.94,0.94,0.94],'drawmode','fast');
+    
+    slider=uicontrol(panel1121,'style','slider','units','Normalized','position',[0,1/3,1,2/3],'enable','off');
+    threshold=uicontrol(panel1121,'style','edit','String','','units','Normalized','FontSize',10,'position',[0,0,1/8,1/3]);
+    ptext=uicontrol(panel1121,'style','text','String','','units','Normalized','FontSize',10,'position',[1/8,0,5/4,1/3]);
+    statush=uicontrol(panel1121,'style','text','String','Ready','units','Normalized','FontSize',10,'position',[3/4,0,1/8,1/3]);
+    timeh=uicontrol(panel1121,'style','text','String','','units','Normalized','FontSize',10,'position',[7/8,0,1/8,1/3]);
+    
+    hJScrollBar = findjobj(slider);
+    hJScrollBar.AdjustmentValueChangedCallback = @sliderf;
+%     set(slider,'callback',@sliderf)
+    
+    sliderB=uicontrol(panel111,'style','slider','units','Normalized','position',[0,0,0.5,0.2],'enable','on','max',1,'min',-1,'value',0,'sliderstep',[0.02,0.2],'callback',@adjustBC);% Brightness correction
+    sliderC=uicontrol(panel111,'style','slider','units','Normalized','position',[0.5,0,0.5,0.2],'enable','on','max',1,'min',-1,'value',0,'sliderstep',[0.02,0.2],'callback',@adjustBC);% Contrast correction
+    BCdata=[];
+    
+    bits=8;
+    
+%   Green, Red, Gray
+%     mapAll={[zeros(256,1),(0:255)'/255,zeros(256,1)],...
+%                 [(0:255)'/255,zeros(256,1),zeros(256,1)],...
+%                 [(0:255)'/255,(0:255)'/255,(0:255)'/255]};
+%     TraceColor={[0,1,0],[1,0,0],[0.5,0.5,0.5]};
+
+
+%   Green, Gray, Gray, Gray
+
+    mapAll={[zeros(256,1),(0:255)'/255,zeros(256,1)],...
+                [(0:255)'/255,(0:255)'/255,(0:255)'/255],...
+                [(0:255)'/255,(0:255)'/255,(0:255)'/255],...
+                [(0:255)'/255,(0:255)'/255,(0:255)'/255]};
+            
+    TraceColor={[0,1,0],[0.5,0.5,0.5],[1,1,1],[1,1,1]};
+            
+    
+
+    channelcheckbox=[];
+    
+    Time=[];
+%     Pathname=log.Pathname;
+    Pathname='D:\lsm';
+    newpathsavestatus='';
+    newpathload_status='';
+    xy=[];
+    info='';
+    r=0;
+    rr=0;
+    rrchannel=0;
+    lastVal=0;
+    lastVal1=0;
+    count=0;
+    currentflash=0;
+    ROI={};
+    ROItext=[];
+    ROIpoint={};
+    Rise={};
+    Down={};
+    stabledata={};
+    DeltF_F0={};
+    MPD_amplitude={};
+    Classf=[];
+    flg=[];
+    FDHM={};
+    FAHM={};
+    flashsignal={};
+    signalpoint={};
+%     flashindex=[]
+    lsmdata=[];
+    lsm_image=[];
+    signal={};
+    hlabel=line('xdata',[0,1],'ydata',[0,1],'color','r','parent',trace.f3,'visible','off');
+    
+    drawlinearray=[];
+    drawlinetextarray=[];
+    drawlinecount=0;
+    
+    sto=1;
+    row=0;
+    col=0;
+    zstack=1;
+    
+    
+    h_R=[];
+    h_P=[];
+    h_D=[];
+
+    OverAllTraceTrace=[];
+    normal=[];
+
+    channel=[];
+    info_extend=[];
+    Filename={};
+    
+    set(f0,'resizefcn',@resizef)
+    set(f0,'windowbuttonmotionfcn',@windowmotionf)
+    set(f0,'CloseRequestFcn',@closereq)
+        
+    jFrame=getJFrame(f0);
+    jFrame.setMaximized(1);
+    
 end
 
 function ChangeColor(~,~)
@@ -344,31 +343,6 @@ function ChangeColor(~,~)
     end
 end
 
-function assignColor
-    global mapAll TraceColor cpYFPCh TMRMCh TPMTCh
-    mapAll_color={[zeros(256,1),(0:255)'/255,zeros(256,1)],...
-            [(0:255)'/255,zeros(256,1),zeros(256,1)],...
-            [(0:255)'/255,(0:255)'/255,(0:255)'/255],...
-            [(0:255)'/255,(0:255)'/255,(0:255)'/255]};
-    TraceColor_color={[0,1,0],[1,0,0],[0.5,0.5,0.5],[1,1,1]};
-    for id=1:4
-        switch id
-            case cpYFPCh
-                mapAll{id}=mapAll_color{1};
-                TraceColor{id}=TraceColor_color{1};
-            case TMRMCh
-                mapAll{id}=mapAll_color{2};
-                TraceColor{id}=TraceColor_color{2};
-            case TPMTCh
-                mapAll{id}=mapAll_color{3};
-                TraceColor{id}=TraceColor_color{3};
-            otherwise
-                mapAll{id}=mapAll_color{4};
-                TraceColor{id}=TraceColor_color{4};
-        end
-    end
-end
-            
 function resizef(~,~)
     global row f0 lsmdata rr rrchannel bits mapAll drawf panel12 col
 %         pf=get(f0,'position');
@@ -464,7 +438,7 @@ end
 
 function drawlinef(~,~)
     global Rectanglt Segpolyt ROIselection  xy f0 trace count...
-        row col signalpoint currentflash drawf
+        row col signalpoint currentflash i drawf
     
     set(Rectanglt,'value',0)
     set(Segpolyt,'value',0)
@@ -675,6 +649,13 @@ function Playf(s,~)
     end
 end
 
+%function Stopf
+%{
+function Stopf(~,~)
+    sto=1;
+end
+%}
+
 function recover(~,~)
     global f0
 
@@ -730,7 +711,7 @@ function windowmotionf(~,~)
 end
 
 function framedeletef(~,~)
-    global r rr lsmdata slider timeh mapAll rrchannel drawf bits lastVal Time
+    global r rr lsm_image slider timeh
 
     choice = questdlg('Do you detemine to detele frame?', 'Delete bad frame','Yes','No','Yes');
     switch choice
@@ -743,16 +724,14 @@ function framedeletef(~,~)
                 else
                     current=1:r;
                     current=setdiff(current,rr);
-                    lsmdata=lsmdata(current);
-                    Time=Time(current);
+                    lsm_image=lsm_image(:,:,current);
+                    rr=1;
                     r=r-1;
                     eachstep=[1/(r-1),1/(r-1)];
-                    set(slider,'sliderstep',eachstep);
-                    if rr>r;rr=r;end
+                    set(slider,'sliderstep',eachstep,'value',0);
+                    set(slider,'value',1);
                     str=strcat(num2str(rr),'/',num2str(r));
                     set(timeh,'string',str)
-                    lastVal=0;
-                    imshow(adjustedBCdata(uint8(lsmdata(rr).data{rrchannel}./2^(bits-8))),mapAll{rrchannel},'parent',drawf.f1)
                 end
             end
         case 'No'
@@ -795,7 +774,7 @@ end
 function retangle(s,e)
     global info Time r Rectanglt drawline Segpolyt ROIselection AutoROIp f0 drawf trace count signalpoint...
         currentflash row col signal channel lsmdata Rise Down stabledata DeltF_F0 MPD_amplitude FDHM FAHM...
-        Classf flashsignal flg Leftt Rightt ROI ROIpoint hidef ROItext listboxtemp
+        Classf flashsignal flg TraceColor Leftt Rightt ROI ROIpoint hidef ROItext listboxtemp
     if isfield(info,'TimeOffset')
         Time=info.TimeOffset;
     else
@@ -1038,7 +1017,19 @@ function retangle(s,e)
                   stabledata{count,1}=num2str(count);
                   flg(count)=0;
 
-                  plotOnTracef3;
+                  cla(trace.f3)
+                  h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
+                  set(h,'buttondownfcn',@f0Downf);
+%                       axis(trace.f3,[1,r,min(signal)-10,max(signal)+10])
+                  if channel>1
+                      for j=2:channel
+                          hold(trace.f3,'on')
+                          plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
+                      end
+                  end
+                  hold(trace.f3,'off')
+                  axis(trace.f3,'on')
+                  set(trace.f3,'outerposition',[0,0,1,1])
 %                   set(tablef,'data',stabledata);
                   hh(1)=h1;
                   hh(2)=h2;
@@ -1090,7 +1081,7 @@ end
 function poly(s,e)
     global info Time r Rectanglt drawline Segpolyt ROIselection AutoROIp f0 drawf trace count signalpoint...
         currentflash row col signal channel lsmdata Rise Down stabledata DeltF_F0 FDHM FAHM...
-        Classf flashsignal flg Leftt Rightt ROI ROIpoint hidef ROItext listboxtemp
+        Classf flashsignal flg TraceColor Leftt Rightt ROI ROIpoint hidef ROItext listboxtemp
     
     x=[];
     y=[];
@@ -1208,8 +1199,20 @@ function poly(s,e)
                         end
                         signal{j}=signal1;
                     end
-
-                    plotOnTracef3;
+                    pf=get(f0,'position');
+                    cla(trace.f3)
+                    h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
+                    set(h,'buttondownfcn',@f0Downf);
+                    if channel>1
+                        for j=2:channel
+                            hold(trace.f3,'on')
+                            plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
+                        end
+                    end
+                    hold(trace.f3,'off')
+%                         axis(trace.f3,[1,r,min(signal)-10,max(signal)+10])
+                    set(trace.f3,'outerposition',[0,0,1,1]);
+                    axis(trace.f3,'on')
                     [ind,pea,base,basepea,down,downpea,RiseTime,DownTime,hd,ha]=traceAnalysis(signal{1},r,Time);
                     point=[];
                     s=signal{1};
@@ -1331,8 +1334,8 @@ end
 
 function deletthis(s,e)
     global count drawf ROI ROItext stabledata flashsignal signalpoint Rise Down FDHM FAHM DeltF_F0 Classf...
-        flg currentflash signal trace listboxtemp ROIselection Rectanglt Segpolyt AutoROIp...
-        ROIpoint Leftt Rightt
+        flg currentflash signal trace TraceColor listboxtemp ROIselection Rectanglt Segpolyt AutoROIp...
+        ROIpoint Leftt Rightt channel
 
     if count>0
         str=get(findobj(drawf.f2,'color','r'),'string');
@@ -1375,7 +1378,17 @@ function deletthis(s,e)
                 set(ROI{currentflash},'color','r')
                 set(ROItext(currentflash),'color','r')
                 signal=flashsignal{currentflash};
-                plotOnTracef3;
+                cla(trace.f3)
+                h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
+                set(h,'buttondownfcn',@f0Downf);
+%                     axis(trace.f3,[1,r,min(signal)-10,max(signal)+10])
+                if channel>1
+                    for j=2:channel
+                        hold(trace.f3,'on')
+                        plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
+                    end
+                end
+                hold(trace.f3,'off')
                 %更新ROI列表
                 currentmark(s,e);
                 set(listboxtemp,'string',stabledata(:,1),'value',currentflash);
@@ -1492,8 +1505,7 @@ function hideROIon(s,~)
 end 
 
 function leftf(s,e)
-    global currentflash ROI ROItext signal flashsignal...
-        count Rightt Leftt listboxtemp
+    global currentflash ROI ROItext trace signal flashsignal channel TraceColor count Rightt Leftt listboxtemp
      if currentflash>1
         set(ROI{currentflash},'color',[1,1,1])
         set(ROItext(currentflash),'color',[0.8,0.8,0])
@@ -1501,7 +1513,17 @@ function leftf(s,e)
         set(ROI{currentflash},'color','r')
         set(ROItext(currentflash),'color','r')
         signal=flashsignal{currentflash};
-        plotOnTracef3;
+        cla(trace.f3)
+        h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
+        set(h,'buttondownfcn',@f0Downf);
+        if channel>1
+            for j=2:channel
+                hold(trace.f3,'on')
+                plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
+            end
+        end
+        hold(trace.f3,'off')
+
         if currentflash<count
             set(Rightt,'enable','on')
         else
@@ -1519,8 +1541,7 @@ function leftf(s,e)
 end
 
 function rightf(s,e)
-    global currentflash ROI ROItext signal flashsignal...
-        count Rightt Leftt listboxtemp
+    global currentflash ROI ROItext trace signal flashsignal channel TraceColor count Rightt Leftt listboxtemp
     if currentflash<count
 
         set(ROI{currentflash},'color',[1,1,1])
@@ -1530,7 +1551,17 @@ function rightf(s,e)
         set(ROItext(currentflash),'color','r')            
 
         signal=flashsignal{currentflash};
-        plotOnTracef3;
+        cla(trace.f3)
+        h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
+        set(h,'buttondownfcn',@f0Downf);
+        if channel>1
+            for j=2:channel
+                hold(trace.f3,'on')
+                plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
+            end
+        end
+        hold(trace.f3,'off')
+
         if currentflash>1
             set(Leftt,'enable','on')
         else
@@ -1648,11 +1679,13 @@ function downff(~,~)
             delete(h3)
             delete(h4)
         end
+
+%         clear str str1 x y  h3 h4 i j jj jjj a x1dat x2dat x3dat x4dat y1dat y2dat y3dat y4dat
     end
 end
 
 function cb2c(~,~)
-    global drawf f0 trace row col count ROIpoint ROI ROItext currentflash Leftt Rightt signal...
+    global drawf f0 trace row col count ROIpoint ROI ROItext currentflash Leftt Rightt signal channel TraceColor...
         flashsignal listboxtemp signalpoint
     ggca=get(drawf.f1,'currentpoint');
     p=get(f0,'currentpoint');
@@ -1717,10 +1750,25 @@ function cb2c(~,~)
         set(ROI{i},'color','r');
         set(ROItext(i),'color','r');
         signal=flashsignal{i};
+%         pf=get(f0,'position');
         set(trace.f3,'OuterPosition',[0,0,1,1])
-        plotOnTracef3;
+%         clear pf
+        cla(trace.f3)
+        h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
+        set(h,'buttondownfcn',@f0Downf);
+        if channel>1
+            for j=2:channel
+                hold(trace.f3,'on')
+                plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
+            end
+        end
+        hold(trace.f3,'off')
+%             legend(trace.f3,strcat('ROI: ',get(ROItext(currentflash),'string')))
+%             axis(trace.f3,[1,r,min(signal)-10,max(signal)+10])
         currentmark(s,e);
         set(listboxtemp,'value',currentflash);
+%         clear s iii  x1 y1 x2 y2 point1 pF
+%         pack
     end
 end
 
@@ -1997,6 +2045,59 @@ function savetracef(s,~)
     end        
 end
 
+function Table_Selection(s,e)
+    global currentflash trace ROI ROItext count Leftt Rightt signal flashsignal channel TraceColor 
+%         [signalpoint{2}.ind,signalpoint{2}.pea,signalpoint{2}.base,signalpoint{2}.basepea,signalpoint{2}.down,signalpoint{2}.downpea,~,~,~,~]...
+%             =traceAnalysis(flashsignal{2}{1},120,Time);
+
+    if currentflash>0
+        cla(trace.f3);
+        set(ROI{currentflash},'color',[1,1,1])
+        set(ROItext(currentflash),'color',[0.8,0.8,0])
+        selected_cells = get(s,'value');
+        if ~isempty(selected_cells)
+            currentflash=selected_cells;
+            if count==1
+                set(Leftt,'enable','off')
+                set(Rightt,'enable','off')
+            else
+                if currentflash==1
+                    set(Leftt,'enable','off')
+                    set(Rightt,'enable','on')
+                elseif currentflash==count
+                    set(Leftt,'enable','on')
+                    set(Rightt,'enable','off')
+                else
+                    set(Leftt,'enable','on')
+                    set(Rightt,'enable','on')
+                end
+            end
+
+            set(ROI{currentflash},'color','r')
+            set(ROItext(currentflash),'color','r')              
+            signal=flashsignal{currentflash};
+%                 disp(mean(signal{1}));clipboard('copy',mean(signal{1})) %backdoor
+            h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
+            set(h,'buttondownfcn',@f0Downf);
+            if channel>1
+                for j=2:channel
+                    hold(trace.f3,'on')
+                    plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
+                end
+            end
+            hold(trace.f3,'off')
+%                 axis(trace.f3,[1,r,min(signal)-10,max(signal)+10])
+            axis(trace.f3,'on')
+%                 legend(trace.f3,strcat('ROI: ',num2str(flashindex(currentflash))))
+            currentmark(s,e);
+        end
+
+%         clear selected_cells l x1 point x1 x2 y2 hh
+%         pack
+    end
+
+end
+
 function f0Downf(s,e)%Figure 上 trace 的buttondown function
     global info Time r f0 trace currentflash signalpoint Rise Down stabledata FDHM FAHM Classf signal DeltF_F0 flg h_R h_P h_D
     if isfield(info,'TimeOffset')
@@ -2144,7 +2245,7 @@ function f0Downf(s,e)%Figure 上 trace 的buttondown function
                 end
             end  
             signalpoint{currentflash}=point;
-            if ~isempty(point.ind)
+            if ~isempty(ind)
                 [ind,pea,base,basepea,down,~,RiseTime,DownTime,hd,ha]=PointFlashAnalysis(signal{1},point,Time);
                 Rise{currentflash}=RiseTime;
                 Down{currentflash}=DownTime;
@@ -2673,7 +2774,7 @@ function showImageWithFilename(~,~)
         ROIpoint stabledata currentflash flashsignal signalpoint Rise Down DeltF_F0 Classf flg ROI ROItext drawf...
         trace Pathname lsmdata info xy r row col zstack bits lsm_image info_extend channel channelcheckbox imAll...
         lastVal1 rrchannel BCdata sliderB sliderC panel12 slider rr lastVal mapAll OverAllTraceTrace normal thresh...
-        th threshold namecolor Time timeh TMRMCh cpYFPCh TPMTCh TraceToShow
+        th threshold namecolor Time
     
     set(Leftt,'enable','off');
     set(Rightt,'enable','off');
@@ -2823,21 +2924,13 @@ function showImageWithFilename(~,~)
         eachstep=[1/(r-1),1/(r-1)];
         set(slider,'sliderstep',eachstep,'value',0);
         lastVal = get(slider, 'Value');
+        eachstep=get(slider,'sliderstep');
         rr=round(lastVal/eachstep(1))+1;
-        str=strcat(num2str(rr),'/',num2str(r)); 
-        set(timeh,'string',str) 
     end
-    
-    for id=1:length(namecolor)
-        if strcmp(namecolor{id},'Ch1-T1');cpYFPCh=id;end
-        if strcmp(namecolor{id},'Ch2-T2');TMRMCh=id;end
-        if strcmp(namecolor{id}(1:5),'T PMT');TPMTCh=id;end
-    end
-    assignColor;
-    TraceToShow=TMRMCh;
-    
+
     imshow(uint8(lsmdata(1).data{1}./2^(bits-8)),mapAll{1},'parent',drawf.f1)
-%     [~,OverAllTraceTrace,normal]=OverAllTraceAnalysis(lsmdata,r,channel,str2double(get(thresh,'string')));
+
+    [~,OverAllTraceTrace,normal]=OverAllTraceAnalysis(lsmdata,r,channel,str2double(get(thresh,'string')));
     im=lsmdata(1).data{1};
     level=graythresh(im);
     th=double(max(max(im))-min(min(im)))*level+double(min(min(im)));
@@ -2870,10 +2963,8 @@ function sliderf(~,~)
         if get(slider, 'Value') ~= lastVal
             lastVal = get(slider, 'Value');
             eachstep=get(slider,'sliderstep');
-            tmp=rr;
             rr=round(lastVal/eachstep(1))+1;
 %                 rrchannel
-            if tmp==rr;return;end
             imshow(adjustedBCdata(uint8(lsmdata(rr).data{rrchannel}./2^(bits-8))),mapAll{rrchannel},'parent',drawf.f1)
             str=strcat(num2str(rr),'/',num2str(r)); 
             set(timeh,'string',str) 
@@ -2914,46 +3005,8 @@ function closereq(~,~)
 
 end
 
-function Table_Selection(s,e)
-    global currentflash trace ROI ROItext count Leftt Rightt signal flashsignal
-    if currentflash>0
-        cla(trace.f3);
-        set(ROI{currentflash},'color',[1,1,1])
-        set(ROItext(currentflash),'color',[0.8,0.8,0])
-        selected_cells = get(s,'value');
-        if ~isempty(selected_cells)
-            currentflash=selected_cells;
-            if count==1
-                set(Leftt,'enable','off')
-                set(Rightt,'enable','off')
-            else
-                if currentflash==1
-                    set(Leftt,'enable','off')
-                    set(Rightt,'enable','on')
-                elseif currentflash==count
-                    set(Leftt,'enable','on')
-                    set(Rightt,'enable','off')
-                else
-                    set(Leftt,'enable','on')
-                    set(Rightt,'enable','on')
-                end
-            end
-
-            set(ROI{currentflash},'color','r')
-            set(ROItext(currentflash),'color','r')              
-            signal=flashsignal{currentflash};
-            plotOnTracef3;
-            currentmark(s,e);
-        end
-
-%         clear selected_cells l x1 point x1 x2 y2 hh
-%         pack
-    end
-
-end
-
 function currentmark(~,~)
-    global signalpoint currentflash h_R h_P h_D trace
+    global signalpoint currentflash h_R h_P h_D i trace
     if ~isempty(signalpoint)
         point=signalpoint{currentflash};
         if ~isempty(point.ind)
@@ -2975,7 +3028,7 @@ function load_status(s,e)
     global newpathload_status Filename Leftt Rightt ROIselection Rectanglt Segpolyt AutoROIp f0 xy count...
         currentflash flashsignal lsmdata mapAll stabledata ROIpoint Rise Down DeltF_F0 FDHM FAHM Classf channelcheckbox...
         info_extend channel OverAllTraceTrace normal flg signalpoint info Pathname lastVal signal slider bits...
-        drawf ROI ROItext trace listboxtemp r rr panel112 panel111 row col lastVal1 rrchannel panel12
+        drawf ROI ROItext trace listboxtemp r rr panel112 panel111 row col lastVal1 rrchannel TraceColor panel12
     if ~exist('newpath','var')||isempty(newpathload_status)
 %             newpathload_status=cd;
 %             newpathload_status='H:\ouyang meng\'
@@ -3319,8 +3372,17 @@ function load_status(s,e)
 %                 
 %                 set(trace.f1,'outerposition',[0,0,1,1]);
 %                 set(trace.f2,'outerposition',[0,0,1,1]);
+            cla(trace.f3)
 
-            plotOnTracef3;
+            h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
+            set(h,'buttondownfcn',@f0Downf);
+            if channel>1
+                for j=2:channel
+                    hold(trace.f3,'on')
+                    plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
+                end
+            end
+            hold(trace.f3,'off')
             currentmark(s,e);
 
 %                 set(trace.f3,'ylim',[min(signal)-10,max(signal)+10],'FontSize',12)
@@ -3440,6 +3502,48 @@ function savef(~,~)
 
 end
 
+% function raf1 raf2
+%{
+function raf1(s,~)
+    global trace channel normal mapAll
+    if get(s,'value')==1
+        cla(trace.f1)
+        for i=1:channel
+%             normal{i}
+            plot(normal{i},'color',mapAll{i}(end,:),'linewidth',2,'parent',trace.f1);
+            hold(trace.f1,'on')
+        end
+        set(trace.f1,'ylim',[0.2,1.2])
+    else
+        cla(trace.f1)
+        for i=1:channel
+            plot(normal{i},'color',mapAll{i}(end,:),'linewidth',2,'parent',trace.f1);
+            hold(trace.f1,'on')
+        end
+    end
+end
+
+function raf2(s,~)
+    global trace channel mapAll OverAllTraceTrace
+    if get(s,'value')==1
+        cla(trace.f2)
+        for i=1:channel
+%             OverAllTraceTrace{i};
+            plot(OverAllTraceTrace{i},'color',mapAll{i}(end,:),'linewidth',2,'parent',trace.f2);
+            hold(trace.f2,'on')
+        end
+        set(trace.f2,'ylim',[20,100])
+    else
+        cla(trace.f2)
+        for i=1:channel
+            plot(OverAllTraceTrace{i},'color',mapAll{i}(end,:),'linewidth',2,'parent',trace.f2);
+            hold(trace.f2,'on')
+        end
+    end   
+
+end
+%}
+
 function opennamef(~,~)
     global Pathname listbox
     %         fid=fopen(OpenTxt());
@@ -3463,6 +3567,14 @@ function opennamef(~,~)
     catch ex 
     end
 end
+
+% function opensinglenamef
+%{
+function opensinglenamef(s,e)
+     Filename=deblank(cell2mat(inputdlg('filename')));
+     showImageWithFilename;
+end
+%}
 
 function openFL(~,~)
     global listbox
@@ -3542,13 +3654,173 @@ function totaltracef(s,~)
     end
 end
 
+%function autoROIfp
+%{
+function autoROIfp(s,e)
+    global Rectanglt Datacursort Segpolyt ROIselection f0 r drawf trace count signalpoint currentflash lsm...
+        lsm_image statush ROIpoint stabledata flashsignal signal Rise Down DeltF_F0 Classf flg...
+        ROItext ROI Leftt Rightt hidef listboxtemp
+    if get(s,'value')==1
+        set(Rectanglt,'value',0)
+        set(Datacursort,'value',0)
+        set(Segpolyt,'value',0)
+        set(ROIselection,'value',0)
+        if r>1
+            set(f0,'WindowButtonmotionfcn',@wb)
+        else
+            set(f0,'WindowButtonmotionfcn','')
+        end
+    else
+        recover(s,e);
+    end
+
+    function wb(~,~)
+
+        p=get(f0,'currentpoint');
+        pp=get(drawf.f1,'currentpoint');
+        ylim=get(trace.f3,'ylim');
+        xlim=get(trace.f3,'xlim');
+        pd=get(trace.f3,'currentpoint');
+
+        if p(1,1)>0&&p(1,1)<0.6&&p(1,2)>0.15&&p(1,2)<1&&pp(1,1)>0&&pp(1,1)<col&&pp(1,2)>0&&pp(1,2)<row
+            cla(drawf.f4);
+            hp1=line('XData',[pp(1,1)-get(slider2,'value'),pp(1,1)+get(slider2,'value')],'YData',[pp(1,2)+get(slider2,'value'),pp(1,2)+get(slider2,'value')],'color','r','parent',drawf.f4);
+            hp2=line('XData',[pp(1,1)+get(slider2,'value'),pp(1,1)+get(slider2,'value')],'YData',[pp(1,2)-get(slider2,'value'),pp(1,2)+get(slider2,'value')],'color','r','parent',drawf.f4);
+            hp3=line('XData',[pp(1,1)-get(slider2,'value'),pp(1,1)+get(slider2,'value')],'YData',[pp(1,2)-get(slider2,'value'),pp(1,2)-get(slider2,'value')],'color','r','parent',drawf.f4);
+            hp4=line('XData',[pp(1,1)-get(slider2,'value'),pp(1,1)-get(slider2,'value')],'YData',[pp(1,2)-get(slider2,'value'),pp(1,2)+get(slider2,'value')],'color','r','parent',drawf.f4);
+
+            set(f0,'pointer','arrow');
+            set(f0,'windowbuttondownfcn',@db1)
+        elseif pd(1,1)>=xlim(1)&&pd(1,1)<=xlim(2)&&pd(1,2)>=ylim(1)&&pd(1,2)<=ylim(2)
+            set(f0,'pointer','cross');
+
+            set(f0,'WindowButtonDownFcn','')
+            if count>0
+                if~isempty(signalpoint)
+                    point=signalpoint{currentflash};
+                    if ~isempty(point.ind)
+                        cg=get(trace.f3,'currentpoint');
+                        x1=point.ind;y1=point.pea;
+                        x2=point.base;y2=point.basepea;
+                        x3=point.down;y3=point.downpea;
+                        x=[x1,x2,x3];y=[y1,y2,y3];
+                        l=length(x);
+                        for i=1:l
+                            if abs(cg(1,1)-(x(i)))+abs(cg(1,2)-y(i))<2
+                                set(f0,'pointer','hand')
+                                set(f0,'windowbuttondownfcn','');
+                                break
+                            else
+                                set(f0,'pointer','cross')
+                            end
+                        end
+                    end
+                end
+            end
+        else
+            cla(drawf.f4);
+            set(f0,'pointer','arrow');
+            set(f0,'WindowButtonDownFcn','')
+        end 
+
+
+        function db1(~,~)
+            x=get(hp1,'XData');
+            x=floor(x);
+            y=get(hp2,'YData');
+            y=floor(y);
+            x=[max(x(1),1),min(x(2),col)];
+            y=[max(y(1),1),min(y(2),row)];
+            lsm=uint8(zeros(y(2)-y(1)+1,x(2)-x(1)+1,r));
+            for i=1:r
+                lsm(:,:,i)=lsm_image(y(1):y(2),x(1):x(2),i);
+            end
+            set(f0,'windowbuttonupfcn',@up1)
+            function  up1(s,e)
+                set(statush,'string','Busy')
+                countcopy=count;
+                [ROIpoint,stabledata,count,flashsignal,signalpoint,signal,  Rise, Down, DeltF_F0, Classf, flg]=autoffP(ROIpoint,stabledata,lsm,lsm_image,r,row,col,x,y,count,flashsignal,signalpoint,Rise, Down, DeltF_F0, Classf, flg);
+%                     signalpoint
+                if count>countcopy
+                    for i=countcopy+1:count
+                        point=ROIpoint{i};
+                        xx=point.x;yy=point.y;
+                        hh=line('XData',xx,'YData', yy,'color',[1,1,1],'LineWidth',1,'parent',drawf.f3);
+                        h5=text(mean(xx),mean(yy),num2str(i),'Parent',drawf.f2);
+                        set(h5,'color',[0.8,0.8,0],'HorizontalAlignment','center')
+                        ROItext(i)=h5;
+                        ROI{i}=hh;
+                    end
+
+                    if countcopy>0
+                        set(ROItext(currentflash),'color',[0.8,0.8,0])
+                        set(ROI{currentflash},'color',[1,1,1])
+                    end
+
+                    currentflash=count;
+                    set(ROItext(currentflash),'color','r')
+                    set(ROI{currentflash},'color','r')
+
+                    if count>1
+                        set(Leftt,'enable','on');
+                        set(Rightt,'enable','off');
+                    elseif count==1
+                        set(Leftt,'enable','off');
+                        set(Rightt,'enable','off');
+                    end
+%                         set(tablef,'data',stabledata);
+                    signal=flashsignal(currentflash,:);
+                    cla(trace.f3)
+                    h=plot(trace.f3,signal,'color',[0,1,0],'LineWidth',2,'tag','hs');
+                    set(h,'buttondownfcn',@f0Downf);
+                    axis(trace.f3,[1,r,min(signal)-10,max(signal)+10])
+                    axis(trace.f3,'on')
+                    set(trace.f3,'outerposition',[0,0,1,1])
+                    status=get(hidef,'value');
+                    if status==1
+                        for i=1:count
+                            set(ROItext(i),'visible','off')
+                        end
+                    end
+
+                    status=get(hideROIf,'value');
+
+                    if status==1
+                        for i=1:count
+                            set(ROItext(i),'visible','off')
+                            set(ROI{i},'visible','off')
+                        end
+                    end
+
+                    set(listboxtemp,'string',stabledata(:,1),'value',count);
+
+                    currentmark(s,e);
+                    if currentflash>1
+                        set(Leftt,'enable','on')
+                        set(Rightt,'enable','off')
+                    else
+                        set(Leftt,'enable','off')
+                        set(Rightt,'enable','off')
+                    end
+                    set(f0,'windowbuttonmotionfcn',@wb)
+                end
+                set(statush,'string','Ready')
+            end
+        end
+    end
+end
+%}
+
 function autof(s,e)
     global f0 r channel drawf trace count currentflash imAll hideROIf...
-        statush ROIpoint stabledata flashsignal signal...
-        ROItext ROI Leftt Rightt hidef listboxtemp signalpoint ...
-        Rise Down DeltF_F0 MPD_amplitude FDHM FAHM Classf flg lsmdata Time...
-        TMRMCh cpYFPCh
-
+        statush ROIpoint stabledata flashsignal signal TraceColor...
+        ROItext ROI Leftt Rightt hidef listboxtemp signalpoint namecolor...
+        Rise Down DeltF_F0 MPD_amplitude FDHM FAHM Classf flg lsmdata Time
+    
+    for id=1:length(namecolor)
+        if strcmp(namecolor{id},'Ch1-T1');cpYFPCh=id;end
+        if strcmp(namecolor{id},'Ch2-T2');TMRMCh=id;end
+    end
     channelForAutoROI=num2str(cpYFPCh);
         
     if r>1
@@ -3590,7 +3862,18 @@ function autof(s,e)
         end
         
         signal=flashsignal{currentflash};        
-        plotOnTracef3;
+        cla(trace.f3)
+        h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
+        set(h,'buttondownfcn',@f0Downf);
+%         axis(trace.f3,[1,r,min(signal)-10,max(signal)+10])
+        if channel>1
+            for j=2:channel
+                hold(trace.f3,'on')
+                plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
+            end
+        end
+        axis(trace.f3,'on')
+        set(trace.f3,'outerposition',[0,0,1,1])
         status=get(hidef,'value');
         if status==1
             for i=1:count
@@ -3731,6 +4014,271 @@ function autof(s,e)
     end
 end
 
+% function batchf(~,~)
+%{
+function batchf(~,~)
+    global Pathname flashsignal count ROIpoint stabledata flg info xy row col lsm_image ROI...
+        ROItext Rise Down currentflash signalpoint DeltF_F0 Classf OverAllTraceTrace normal r
+
+    [filename, Pathname] = uigetfile({'*.tif;*.lsm;*.mat'},'select file',cd,'MultiSelect','on');
+    if ~iscell(filename)
+        if filename==0
+            filename={};
+        end
+    end
+
+    if ~isempty(filename)
+        if Pathname
+            mkdir(Pathname,'status')
+        end
+
+        hw1=waitbar(0,'Flashes detection is in progress,please wait...','name','Batch processing','CreateCancelBtn',@CancelFcn);
+        SetIcon(hw1);
+        movegui(hw1,'center');
+
+        pause(0.1)
+
+        if iscell(filename)
+            ll=length(filename);
+        else
+            ll=1;
+        end
+        steps = ll;
+
+        for ii=1:ll
+%                 try
+                flashsignal=[];
+                count=0;
+                ROIpoint={};
+                stabledata={};
+                flg=[];
+                if ~iscell(filename)
+                    str=[Pathname,filename];
+                    [~, name, ext] = fileparts(filename);
+                else
+                    str=[Pathname,filename{ii}];
+                    [~, name, ext] = fileparts(filename{ii});
+                end
+                if 1
+                    if strcmp(ext,'.lsm')
+                        lsm=tiffread(str);
+                        info=lsm(1).lsm;
+                        xy.VoxelSizeX=info.VoxelSizeX;
+                        xy.VoxelSizeY=info.VoxelSizeY;
+                        l=length(lsm);
+
+                        image=lsm(1).data;
+                        if isa(image,'cell')
+                            image=image{1};
+                            [row,col]=size(image);
+                            lsm_image=uint8(zeros(row,col,l));
+                            if isa(image,'uint16')
+                                for i=1:l
+                                    imag=lsm(i).data{1};
+                                    imag=imresize(imag,[row,col]);
+                                    imag=double(imag)/20;
+                                    imag=uint8(imag);
+                                    lsm_image(:,:,i)=imag;
+                                end
+                            else
+                                for i=1:l
+                                    imag=lsm(i).data{1};
+                                    imag=imresize(imag,[row,col]);
+                                    lsm_image(:,:,i)=imag;
+                                end
+                            end
+                        else
+                            [row,col]=size(image);
+                            lsm_image=uint8(zeros(row,col,l));
+                            if isa(image,'uint16')
+                                for i=1:l
+                                    imag=lsm(i).data;
+                                    imag=imresize(imag,[row,col]);
+                                    imag=double(imag)/20;
+                                    imag=uint8(imag);
+                                    lsm_image(:,:,i)=imag;
+                                end
+                            else
+                                for i=1:l
+                                    imag=lsm(i).data;
+                                    imag=imresize(imag,[row,col]);
+                                    lsm_image(:,:,i)=imag;
+                                end
+                            end
+                        end
+                    elseif strcmp(ext,'.tif')
+                        [lsm_image,info,xy]=tifread(str);
+                    elseif strcmp(ext,'.mat')
+                        status=load(str);
+                        status=status.status;
+                        lsm_image=status.image;
+                        info=status.info;
+                        xy=status.xy;
+                    end
+                    r=size(lsm_image,3);
+
+                    if r>10
+                        [row,col]=size(lsm_image(:,:,1));
+                        flashsignal=[];
+                        ROI={};
+                        ROItext=[];
+                        ROIpoint={};
+                        stabledata={};
+                        count=0;
+                        currentflash=0;
+                        signalpoint={};
+                        Rise={};
+                        Down={};
+                        DeltF_F0={};
+                        Classf=[];
+
+                        [~,OverAllTraceTrace,lsm_image,normal]=OverAllTraceAnalysis(lsm_image,r);
+                        if ~isempty(strfind(lower(name),'glu'))
+                            [ROIpoint,stabledata,count,flashsignal,signalpoint Rise Down DeltF_F0 Classf flg]=autoff(ROIpoint,stabledata,lsm_image,r,row,col,count,flashsignal);
+                        end
+                        currentflash=count;
+                        map1=[zeros(256,1),(0:255)'/256,zeros(256,1)];
+                        status.tag='Flash';
+                        status.filename=name;
+                        status.info=info;
+                        status.xy=xy;
+                        status.count=count;
+                        status.currentflash=currentflash;
+                        status.flashsignal=flashsignal;
+                        status.image=lsm_image;
+                        status.OverAllTrace=OverAllTraceTrace;
+                        status.normal=normal;                            
+                        status.map=map1;
+                        status.stabledata=stabledata;
+                        status.ROIpoint=ROIpoint;
+                        status.Rise=Rise;
+                        status.Down=Down;
+                        status.DeltF_F0=DeltF_F0;
+                        status.Classf=Classf;
+                        status.flg=flg;
+                        status.signalpoint=signalpoint;
+                        save(strcat(Pathname,'status\',name,'.mat'), 'status')
+                    end
+                end
+%                 catch
+%                     name
+%                 end
+            waitbar(ii / steps,hw1)
+        end
+        pause(0.1)
+        delete(hw1)
+    end
+
+    function CancelFcn(s,~)
+        delete(s);
+        error('In this case, the newline \n is not converted.')
+    end
+
+
+end
+%}
+
+% function AutoTotalf(~,~)
+%{
+% function AutoTotalf(~,~)
+%     global info Time r th threshold statush f0 flashsignal ROI ROItext ROIpoint stabledata count...
+%         signalpoint Rise Down Classf FDHM FAHM drawf trace DeltF_F0 flg lsmdata channel...
+%         rr currentflash Leftt Rightt signal TraceColor hidef hideROIf mapAll
+%     if isfield(info,'TimeOffset')
+%         Time=info.TimeOffset;
+%     else
+%         Time=1:r;
+%     end        
+%     th=get(threshold,'string');
+%     th=str2double(th);
+%     if ~(th<0 ||th>255||isnan(th))
+%         if r>1
+%             set(statush,'string','Busy')
+%             set(f0,'WindowButtonMotionFcn','')
+%             ROI={};
+%             ROItext=[];
+%             currentflash=0;
+%             FDHM={};
+%             FAHM={};
+%             cla(drawf.f2)
+%             cla(drawf.f3)
+%             cla(trace.f3)
+%             pause(0.1)
+%             [ROIpoint,stabledata,count,flashsignal,signalpoint Rise Down DeltF_F0 Classf flg]=autoTotalff(lsmdata,r,th,channel,Time);
+%             imshow(uint8(lsmdata(rr).data{rrchannel},mapAll{rrchannel}./2^(bits-8)),'parent',drawf.f1)
+%             if count
+%                 for i=1:count
+%                     point=ROIpoint{i};
+%                     xx=point.x;yy=point.y;
+%                     hh=line('XData',xx,'YData', yy,'color',[1,1,1],'LineWidth',1,'parent',drawf.f3);
+%                     h5=text(mean(xx),mean(yy),num2str(i),'Parent',drawf.f2);
+%                     set(h5,'color',[0.8,0.8,0],'HorizontalAlignment','center')
+%                     ROItext(i)=h5;
+%                     ROI{i}=hh;
+%                 end
+%                 currentflash=count;
+%                 set(ROItext(currentflash),'color','r')
+%                 set(ROI{currentflash},'color','r')
+%                 if count>1
+%                     set(Leftt,'enable','on');
+%                     set(Rightt,'enable','off');
+%                 elseif count==1
+%                     set(Leftt,'enable','off');
+%                     set(Rightt,'enable','off');
+%                 end
+%                 signal=flashsignal{1};
+%                 cla(trace.f3)
+%                 h=plot(trace.f3,signal{1},'color',[0,1,0],'LineWidth',2,'tag','hs');
+%                 set(h,'buttondownfcn',@f0Downf);
+%                 if channel>1
+%                     for j=2:channel
+%                         hold(trace.f3,'on')
+%                         plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
+%                     end
+%                 end
+%                 hold(trace.f3,'off')
+%                 axis(trace.f3,'on')
+%                 set(trace.f3,'outerposition',[0,0,1,1])
+% 
+%                 status=get(hidef,'value');
+%                 if status==1
+%                     for i=1:count
+%                         set(ROItext(i),'visible','off')
+%                     end
+%                 end
+% 
+%                 status=get(hideROIf,'value');
+% 
+%                 if status==1
+%                     for i=1:count
+%                         set(ROItext(i),'visible','off')
+%                         set(ROI{i},'visible','off')
+%                     end
+%                 end
+% 
+%                 set(listboxtemp,'string',stabledata(:,1),'value',count);
+% 
+% %                     currentmark(s,e);
+%                 currentmark;
+%                 if currentflash>1
+%                     set(Leftt,'enable','on')
+%                     set(Rightt,'enable','off')
+%                 else
+%                     set(Leftt,'enable','off')
+%                     set(Rightt,'enable','off')
+%                 end
+% %                     recover(s,e);
+%                 recover;
+% 
+%             end
+% 
+%             set(statush,'string','Ready')
+%             pack
+%         end
+%     end
+% end
+%}
+
 function datacursoron(~,~)
     global Select
     datacursormode on
@@ -3741,9 +4289,24 @@ function datacursoroff(~,~)
     datacursormode off
 end
 
+% function Selectionff Selection
+%{
+function Selectionff(~,~)
+    global f0
+    set(f0,'windowbuttonmotionfcn','','windowbuttondownfcn','','pointer','arrow')
+    set(f0,'windowbuttonupfcn','')
+end
+
+function Selection(~,~)
+    global Datacursort f0
+    set(Datacursort,'state','off')
+    set(f0,'windowbuttonmotionfcn',@motionf)
+end
+%}
+
 function BatchAutomaticDrawROI(~,~)
     global Pathname Filename ROIpoint count flashsignal lsmdata r channel ...
-        imAll Time namecolor meanIm TMRMCh cpYFPCh
+        imAll Time namecolor meanIm
     clc
 
     [filename, pathname] = uigetfile({'*.lsm'},'select file',Pathname,'MultiSelect','on');
@@ -3765,6 +4328,10 @@ function BatchAutomaticDrawROI(~,~)
             Filename=filename{ii}; 
             showImageWithFilename;
             
+            for id=1:length(namecolor)
+                if strcmp(namecolor{id},'Ch1-T1');cpYFPCh=id;end
+                if strcmp(namecolor{id},'Ch2-T2');TMRMCh=id;end
+            end            
             channelForAutoROI=num2str(TMRMCh);
             
             meanIm=imAll(:,:,str2double(channelForAutoROI));
@@ -3783,26 +4350,137 @@ function ResetBC(~,~)
     adjustBC;
 end
 
+function manualPara(hobj,~)
+    global trace manParaPoint
+    if strcmp(get(hobj,'string'),'ManPara')
+        manParaPoint=[];
+        set(trace.f3,'buttondownfcn',{@selePara,hobj})
+        set(hobj,'string','1');
+    else
+        manParaPoint=[];
+        set(buttobj,'string','ManPara')
+        set(trace.f3,'buttondownfcn','')        
+    end
+end
+
+function selePara(~,~,buttobj)
+    global Time signalpoint currentflash signal Rise Down stabledata DeltF_F0 FDHM FAHM...
+        Classf trace manParaPoint
+    ylim=get(trace.f3,'ylim');
+    xlim=get(trace.f3,'xlim');
+    pd=get(trace.f3,'currentpoint');
+
+    if pd(1,1)>=xlim(1)&&pd(1,1)<=xlim(1)+xlim(2)&&pd(1,2)>=ylim(1)&&pd(1,2)<=ylim(1)+ylim(2)
+        xy_sstart=pd;
+        xy_sstart=xy_sstart(1,1);
+        [~,xy_sstart]=min(abs(Time-xy_sstart));
+    end
+    manParaPoint=[manParaPoint xy_sstart];
+
+    switch get(buttobj,'string')
+        case '1'
+            set(buttobj,'string','2')
+        case '2'
+            set(buttobj,'string','3')
+        case '3'
+            set(buttobj,'string','ManPara')
+            set(trace.f3,'buttondownfcn','')
+            manParaPoint=sort(manParaPoint);
+            
+            point=signalpoint{currentflash};
+            point.ind=manParaPoint(2);
+            point.pea=signal{1}(point.ind);
+            point.down=manParaPoint(3);
+            point.downpea=signal{1}(point.down);
+            point.base=manParaPoint(1);
+            point.basepea=signal{1}(point.base);
+            signalpoint{currentflash}=point;
+            
+            [ind,pea,base,basepea,down,~,RiseTime,DownTime,hd,ha]=PointFlashAnalysis(signal{1},point,Time);
+            currentmark
+
+            if ~isempty(ind)
+                Rise{currentflash}=RiseTime;
+                Down{currentflash}=DownTime;
+                stabledata{currentflash,2}=num2str(ind-base+1);
+                stabledata{currentflash,3}=num2str((pea-basepea)/basepea);
+                stabledata{currentflash,4}=num2str(down-ind+1);
+                stabledata{currentflash,6}=[];
+                DeltF_F0{currentflash}=(pea-basepea)./basepea;
+                FDHM{currentflash}=hd;
+                FAHM{currentflash}=ha;
+                if RiseTime-DownTime>1
+                    if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+                        if length(ind)==1
+                            Classf(currentflash)=111;
+                            stabledata{currentflash,5}=111;
+                        else
+                            Classf(currentflash)=112;
+                            stabledata{currentflash,5}=112;
+                        end
+                    else
+                        if length(ind)==1
+                            Classf(currentflash)=121;
+                            stabledata{currentflash,5}=121;
+                        else
+                            Classf(currentflash)=122;
+                            stabledata{currentflash,5}=121;
+                        end
+                    end
+                elseif DownTime-RiseTime>1
+                    if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+                        if length(ind)==1
+                            Classf(currentflash)=211;
+                            stabledata{currentflash,5}=211;
+                        else
+                            Classf(currentflash)=212;
+                            stabledata{currentflash,5}=212;
+                        end
+                    else
+                        if length(ind)==1
+                            Classf(currentflash)=221;
+                            stabledata{currentflash,5}=221;
+                        else
+                            Classf(currentflash)=222;
+                            stabledata{currentflash,5}=222;
+                        end
+                    end
+                else
+                    if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+                        if length(ind)==1
+                            Classf(currentflash)=311;
+                            stabledata{currentflash,5}=311;
+                        else
+                            Classf(currentflash)=312;
+                            stabledata{currentflash,5}=312;
+                        end
+                    else
+                        if length(ind)==1
+                            Classf(currentflash)=321;
+                            stabledata{currentflash,5}=321;
+                        else
+                            Classf(currentflash)=322;
+                            stabledata{currentflash,5}=322;
+                        end
+                    end
+                end
+            else
+                Rise{currentflash}=[];
+                Down{currentflash}=[];
+                DeltF_F0{currentflash}=[];
+                stabledata{currentflash,2}=[];
+                stabledata{currentflash,3}=[];
+                stabledata{currentflash,4}=[];
+                stabledata{currentflash,5}=[];
+                stabledata{currentflash,6}=[];
+                FDHM{currentflash}=[];
+                FAHM{currentflash}=[];
+                Classf(currentflash)=0;
+            end
+    end
+end
+
 function showMeanImage(~,~)
     global imAll bits mapAll drawf rrchannel
     imshow(adjustedBCdata(uint8(imAll(:,:,rrchannel)./2^(bits-8))),mapAll{rrchannel},'parent',drawf.f1)
-end
-
-function plotOnTracef3
-
-    global trace TraceColor signal channel TraceToShow
-
-    cla(trace.f3)
-    h=plot(trace.f3,signal{1},'color',TraceColor{1},'LineWidth',2,'tag','hs');
-    set(h,'buttondownfcn',@f0Downf);
-    if channel>1
-        for j=TraceToShow
-            hold(trace.f3,'on')
-            plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
-        end
-    end
-    hold(trace.f3,'off')
-    %                         axis(trace.f3,[1,r,min(signal)-10,max(signal)+10])
-    set(trace.f3,'outerposition',[0,0,1,1]);
-    axis(trace.f3,'on')
 end
