@@ -1,6 +1,4 @@
-% 这一版里面的ROIInfo是手动指定flash的。把自动判断trace的para的部分注释掉了,标记是modify#2
-% 把recover里的set(f0,'WindowButtonmotionfcn',@windowmotionf)去掉，标记是modify#1
-
+% 这一版里面的ROIInfo是手动指定flash的
 function FlashAnalyzer(varargin)
 tic
     % ROI是画出的ROI的线的句柄，ROIpoint是flash的参数和围成ROI的点，ROItext是标记ROI的数字的句柄，flashsignal是ROI的时间序列均值
@@ -25,8 +23,7 @@ tic
         if ishandle(f0);return;end
         newpath1='';
         f0 = figure('Visible','on','Menubar','none','Toolbar','none','Units','Normalized','Position',[0,0,1,0.95],'numbertitle','off','resize','on');
-        set(f0,'name','Superoxide Flashes Detector','tag','figure1','color',[0.94,0.94,0.94])
-        set(f0,'keypressfcn',@keyPress)
+        set(f0,'name','Superoxide Flashes Detector','tag','figure1','color',[0.94,0.94,0.94],'keypressfcn',@keyPress)
         warning off all;
         SetIcon(f0);
         th = uitoolbar(f0);
@@ -676,8 +673,7 @@ end
 function recover(~,~)
     global f0
 
-% modify#1
-%     set(f0,'WindowButtonmotionfcn',@windowmotionf)
+    set(f0,'WindowButtonmotionfcn',@windowmotionf)
     set(f0,'WindowButtonDownFcn','')
     set(f0,'WindowButtonupFcn','')
 
@@ -824,6 +820,7 @@ function retangle(~,~)
     end
 
     function wb(~,~)
+
         p=get(f0,'currentpoint');
         pg=get(drawf.f1,'currentpoint');
 
@@ -1525,7 +1522,7 @@ function cb2c(~,~)
         set(trace.f3,'OuterPosition',[0,0,1,1])
         plotOnTracef3;
         currentmark([],[]);
-        set(listboxtemp,'value',currentflash); 
+        set(listboxtemp,'value',currentflash);
     end
 end
 
@@ -1724,11 +1721,11 @@ function savetracef(s,~)
             data=[];
             cname={'ROI','cpYFP_F0','Peak','F_end','deltaF/F0','TMRM_F0','Peak','F_end','deltaF/F0'};
             for id=1:count
-                for id1=1:length(signalpoint{id}.ind)
-                    cpYFP_F0=signalpoint{id}.basepea(id1);
-                    cpYFP_Peak=signalpoint{id}.pea(id1);
-                    cpYFP_F_end=signalpoint{id}.downpea(id1);
-                    cpYFP_deltaF_F0=(cpYFP_Peak-cpYFP_F0)/cpYFP_F0;
+                for id1=1:length(signalpoint{id}.tind)
+                    cpYFP_F0=0;%signalpoint{id}.tbasepea(id1);
+                    cpYFP_Peak=0;%signalpoint{id}.tpea(id1);
+                    cpYFP_F_end=0;%signalpoint{id}.tdownpea(id1);
+                    cpYFP_deltaF_F0=0;%(cpYFP_Peak-cpYFP_F0)/cpYFP_F0;
 
                     TMRM_F0=signalpoint{id}.tbasepea(id1);
                     TMRM_Peak=signalpoint{id}.tpea(id1);
@@ -1996,33 +1993,33 @@ function f0Downf(~,~)
             tdown=sort([tdown tdown1]);
 
             %对cpYFP的trace操作
-            region=sort([1 base ind down 100]); %找出curr周围的已标记的点和总的左右边界
-            leftNeighbor=region(find(region<curr,1,'last'));
-            rightNeighbor=region(find(region>curr,1,'first'));
-
-            searchRange=[curr-1 curr+2]; % 寻找cpYFP最高点的区域
-            if searchRange(1)<leftNeighbor;searchRange(1)=leftNeighbor;end
-            if searchRange(2)>rightNeighbor;searchRange(2)=rightNeighbor;end  %假定有100个点
-            [~,ind1]=min(-signal{cpYFPCh}(searchRange(1):searchRange(2))); %寻找cpYFP局部最高点的相对位置
-            ind1=ind1+searchRange(1)-1; % tind的绝对位置
-            flashRange=leftNeighbor:rightNeighbor;
-            signalRange=-signal{cpYFPCh}(flashRange);
-%             signalRange=smooth(signalRange,3);
-            [~,peaklocs]=findpeaks([-255 signalRange -255]); % 找出这个区域里所有峰值的相对位置
-            peaklocs=peaklocs+leftNeighbor-2; % 算出peaklocs的绝对位置
-            base1=peaklocs(find(peaklocs<ind1,1,'last'));
-            down1=peaklocs(find(peaklocs>ind1,1,'first'));
-
-            ind=sort([ind ind1]);
-            base=sort([base base1]);
-            down=sort([down down1]);
-
-            point.base=base;
-            point.ind=ind;
-            point.down=down;
-            point.pea=signal{cpYFPCh}(ind);
-            point.basepea=signal{cpYFPCh}(base);
-            point.downpea=signal{cpYFPCh}(down);
+%             region=sort([1 base ind down 100]); %找出curr周围的已标记的点和总的左右边界
+%             leftNeighbor=region(find(region<curr,1,'last'));
+%             rightNeighbor=region(find(region>curr,1,'first'));
+% 
+%             searchRange=[curr-1 curr+2]; % 寻找cpYFP最高点的区域
+%             if searchRange(1)<leftNeighbor;searchRange(1)=leftNeighbor;end
+%             if searchRange(2)>rightNeighbor;searchRange(2)=rightNeighbor;end  %假定有100个点
+%             [~,ind1]=min(-signal{cpYFPCh}(searchRange(1):searchRange(2))); %寻找cpYFP局部最高点的相对位置
+%             ind1=ind1+searchRange(1)-1; % tind的绝对位置
+%             flashRange=leftNeighbor:rightNeighbor;
+%             signalRange=-signal{cpYFPCh}(flashRange);
+% %             signalRange=smooth(signalRange,3);
+%             [~,peaklocs]=findpeaks([-255 signalRange -255]); % 找出这个区域里所有峰值的相对位置
+%             peaklocs=peaklocs+leftNeighbor-2; % 算出peaklocs的绝对位置
+%             base1=peaklocs(find(peaklocs<ind1,1,'last'));
+%             down1=peaklocs(find(peaklocs>ind1,1,'first'));
+% 
+%             ind=sort([ind ind1]);
+%             base=sort([base base1]);
+%             down=sort([down down1]);
+% 
+%             point.base=base;
+%             point.ind=ind;
+%             point.down=down;
+%             point.pea=signal{cpYFPCh}(ind);
+%             point.basepea=signal{cpYFPCh}(base);
+%             point.downpea=signal{cpYFPCh}(down);
 
             point.tbase=tbase;
             point.tind=tind;
@@ -2319,7 +2316,7 @@ disp(toc/60)
     set(f0,'WindowButtonUpFcn','')
     set(Mergebutton,'value',0);
     
-%     wb=waitbar(0);
+    wb=waitbar(0);
         
     signal=0;
     count=0;
@@ -2424,10 +2421,10 @@ disp(toc/60)
     count1=1;
     total=r;
     for i=2:r
-        offsets(i,:)=image_correlation_offset(lsmdata(1).data{3},lsmdata(i).data{3});
-%         offsets(i,:)=image_correlation_offset(lsmdata(1).data{1},lsmdata(i).data{1}); %以Ch-1 T-1，通常是cpYFP来配准
+%         offsets(i,:)=image_correlation_offset(lsmdata(1).data{3},lsmdata(i).data{3});
+        offsets(i,:)=image_correlation_offset(lsmdata(1).data{1},lsmdata(i).data{1}); %以Ch-1 T-1，通常是cpYFP来配准
         count1=count1+1;
-%         waitbar(count1/total,wb)
+        waitbar(count1/total,wb)
     end
     imAll=zeros(col,row,channel,r);
     for i1=1:channel
@@ -2437,7 +2434,7 @@ disp(toc/60)
             imAll(:,:,i1,i)=lsmdata(i).data{i1};
         end
     end
-%     delete(wb)
+    delete(wb)
 % toc
     
     imAll=uint8(mean(imAll,4));
@@ -2455,13 +2452,18 @@ disp(toc/60)
         set(timeh,'string',str) 
     end
     
-    for id=1:length(namecolor)
-        try
-            if strcmp(namecolor{id},'Ch1-T1');cpYFPCh=id;end
-            if strcmp(namecolor{id},'Ch2-T2');TMRMCh=id;end
-            if strcmp(namecolor{id}(1:5),'T PMT');TPMTCh=id;end
-        end
-    end
+%     for id=1:length(namecolor)
+%         try
+%             if strcmp(namecolor{id},'Ch1-T1');cpYFPCh=id;end
+%             if strcmp(namecolor{id},'Ch2-T2');TMRMCh=id;end
+%             if strcmp(namecolor{id}(1:5),'T PMT');TPMTCh=id;end
+%         end
+%     end
+%     assignColor;
+%     TraceToShow=TMRMCh;
+    
+    TMRMCh=1;
+    TPMTCh=2;
     assignColor;
     TraceToShow=TMRMCh;
     
@@ -2592,22 +2594,22 @@ function currentmark(~,~)
     global signalpoint currentflash h_R h_P h_D trace t_R t_P t_D
     if ~isempty(signalpoint)
         point=signalpoint{currentflash};
-        if ~isempty(point.ind)
+        if ~isempty(point.tind)
             hold(trace.f3,'on')
             h_R=[];h_P=[];h_D=[];
             t_R=[];t_P=[];t_D=[];
-            for i=1:length(point.ind)
-                h_R(i)=line('XData',point.ind(i),'YData',point.pea(i),'Marker','s','color','r','markersize',10,'tag','0','parent',trace.f3);
-                h_P(i)=line('XData',point.base(i),'YData',point.basepea(i),'Marker','*','color','r','markersize',10,'tag','1','parent',trace.f3);
-                h_D(i)=line('XData',point.down(i),'YData',point.downpea(i),'Marker','o','color','r','markersize',10,'tag','2','parent',trace.f3);
+            for i=1:length(point.tind)
+%                 h_R(i)=line('XData',point.ind(i),'YData',point.pea(i),'Marker','s','color','r','markersize',10,'tag','0','parent',trace.f3);
+%                 h_P(i)=line('XData',point.base(i),'YData',point.basepea(i),'Marker','*','color','r','markersize',10,'tag','1','parent',trace.f3);
+%                 h_D(i)=line('XData',point.down(i),'YData',point.downpea(i),'Marker','o','color','r','markersize',10,'tag','2','parent',trace.f3);
                 t_R(i)=line('XData',point.tind(i),'YData',point.tpea(i),'Marker','s','color','b','markersize',10,'tag','3','parent',trace.f3);
                 t_P(i)=line('XData',point.tbase(i),'YData',point.tbasepea(i),'Marker','*','color','b','markersize',10,'tag','4','parent',trace.f3);
                 t_D(i)=line('XData',point.tdown(i),'YData',point.tdownpea(i),'Marker','o','color','b','markersize',10,'tag','5','parent',trace.f3);
             end
             hold(trace.f3,'off')
-            set(h_R,'buttondownfcn',@PointDownf)
-            set(h_P,'buttondownfcn',@PointDownf)
-            set(h_D,'buttondownfcn',@PointDownf)
+%             set(h_R,'buttondownfcn',@PointDownf)
+%             set(h_P,'buttondownfcn',@PointDownf)
+%             set(h_D,'buttondownfcn',@PointDownf)
             set(t_R,'buttondownfcn',@PointDownf)
             set(t_P,'buttondownfcn',@PointDownf)
             set(t_D,'buttondownfcn',@PointDownf)
@@ -3132,53 +3134,52 @@ function plotOnTracef3
 end
 
 function formROIInfoAndsignalpoint
-% modify#2
 %生成ROIInfo的第二列
     global flashThresh TMRMCh cpYFPCh flashsignal currentflash ROIInfo signalpoint
     
-%     trace=flashsignal{currentflash}{cpYFPCh};
-%     para=analyze_flash_parameter(trace);
-%     para=para';
-%     paraMat=cell2mat(para);
-%     if ~isempty(paraMat)
-%         netOut=netPatternRecogIDL(paraMat);
-%         flashType=zeros(size(netOut));
-%         isFlash=netOut>flashThresh;
-%         flashType(isFlash)=1;
-%         TMRMTrace=flashsignal{currentflash}{TMRMCh};
-%         TMRMDowns=TMRMTrace(fix(paraMat(:,17))+1);
-%         isType2=TMRMDowns<10;
-%         flashType(isFlash&isType2)=2;
-%         ROIInfo{currentflash,2}=[paraMat netOut' flashType'];
-%     else
+    trace=flashsignal{currentflash}{cpYFPCh};
+    para=analyze_flash_parameter(trace);
+    para=para';
+    paraMat=cell2mat(para);
+    if ~isempty(paraMat)
+        netOut=netPatternRecogIDL(paraMat);
+        flashType=zeros(size(netOut));
+        isFlash=netOut>flashThresh;
+        flashType(isFlash)=1;
+        TMRMTrace=flashsignal{currentflash}{TMRMCh};
+        TMRMDowns=TMRMTrace(fix(paraMat(:,17))+1);
+        isType2=TMRMDowns<10;
+        flashType(isFlash&isType2)=2;
+        ROIInfo{currentflash,2}=[paraMat netOut' flashType'];
+    else
         ROIInfo{currentflash,2}=[];
-%         flashType=[];
-%     end
+        flashType=[];
+    end
     
-%     if ~isempty(find(flashType, 1))
-%         point.ind=fix(paraMat(isFlash,16))+1;
-%         point.base=fix(paraMat(isFlash,15))+1;
-%         point.down=fix(paraMat(isFlash,17))+1;
-%         point.pea=trace(point.ind);
-%         point.basepea=trace(point.base);
-%         point.downpea=trace(point.down);
-%     else
+    if ~isempty(find(flashType, 1))
+        point.ind=fix(paraMat(isFlash,16))+1;
+        point.base=fix(paraMat(isFlash,15))+1;
+        point.down=fix(paraMat(isFlash,17))+1;
+        point.pea=trace(point.ind);
+        point.basepea=trace(point.base);
+        point.downpea=trace(point.down);
+    else
         point.ind=[];
         point.base=[];
         point.down=[];
         point.pea=[];
         point.basepea=[];
         point.downpea=[];
-%     end
-%     if ~isempty(paraMat)
-    point.tbase=point.base;
-    point.tind=point.ind;
-    point.tdown=point.down;
-    point.tpea=[];
-    point.tbasepea=[];
-    point.tdownpea=[];
-    signalpoint{currentflash}=point;
-%     end
+    end
+    if ~isempty(paraMat)
+        point.tbase=point.base;
+        point.tind=point.ind;
+        point.tdown=point.down;
+        point.tpea=TMRMTrace(point.tind);
+        point.tbasepea=TMRMTrace(point.tbase);
+        point.tdownpea=TMRMTrace(point.tdown);
+        signalpoint{currentflash}=point;
+    end
 end
 
 function autoROI(meanIm,channels_analyze)
@@ -3279,20 +3280,20 @@ meanROIFluorescence
 
 end
 
-% %{
+%{
 function calFluorescenceArea
     global xy imAll WholeArea lsmdata
-%     if isempty(imAll)
-        imAll=lsmdata(1).data{1};
-%     end
-    bw=im2bw(imAll(:,:,1),graythresh(imAll(:,:,1)));
+    if isempty(imAll)
+        imAll=lsmdata(1).data{3};
+    end
+    bw=im2bw(imAll(:,:,3),graythresh(imAll(:,:,3)));
     pixels=sum(bw(:));
     WholeArea=pixels*xy.VoxelSizeX*xy.VoxelSizeY*1e12;  %平方微米
-%     figure('name',['Total Area: ',num2str(WholeArea)])
-%     imshow(bw)
-%     clipboard('copy',WholeArea);
+    figure('name',['Total Area: ',num2str(WholeArea)])
+    imshow(bw)
+    clipboard('copy',WholeArea);
 end
-% %}
+%}
 
 %{
 function corrAll
@@ -3356,27 +3357,9 @@ end
 %}
  
 function universal(~,~)
-    calAllAreas
-    
 %     calFluorescenceArea
 % corrAll
 %     meanROIFluorescence
-beep
-end
-
-function calAllAreas
-    global Filename areas WholeArea
-    f=fopen('names.txt');
-    Filename=fgetl(f);
-    areas=[];
-    while Filename~=-1
-        Filename=[Filename,'.lsm'];
-        showImageWithFilename
-        calFluorescenceArea
-        areas=[areas;WholeArea];
-        Filename=fgetl(f);
-    end
-    fclose(f);
 end
 
 function CountCellOnFcn(~,~)
@@ -3427,7 +3410,7 @@ function meanROIFluorescence
     TMRMMean=cpYFPMean;
     for id=1:length(flashsignal)
         cpYFPMean(id,:)=flashsignal{id}{1};
-        TMRMMean(id,:)=flashsignal{id}{3};
+        TMRMMean(id,:)=flashsignal{id}{1};
     end
     cpYFPMean=mean(cpYFPMean);
     TMRMMean=mean(TMRMMean);
@@ -3443,9 +3426,9 @@ function meanROIFluorescence
 
         for id=1:length(flashsignal)
             ratio_cpYFP=mean(flashsignal{id}{1})/mean(cpYFPMean);
-            ratio_TMRM=mean(flashsignal{id}{3})/mean(TMRMMean);
+            ratio_TMRM=mean(flashsignal{id}{1})/mean(TMRMMean);
             flashsignal{id}{1}=flashsignal{id}{1}-cpYFPMean*ratio_cpYFP+mean(flashsignal{id}{1});
-            flashsignal{id}{3}=flashsignal{id}{3}-TMRMMean*ratio_TMRM+mean(flashsignal{id}{3});
+%             flashsignal{id}{3}=flashsignal{id}{3}-TMRMMean*ratio_TMRM+mean(flashsignal{id}{3});
         end
 %         flashsignal_corrected=true;
     end

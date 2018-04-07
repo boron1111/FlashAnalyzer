@@ -1,8 +1,5 @@
-% 这一版里面的ROIInfo是手动指定flash的。把自动判断trace的para的部分注释掉了,标记是modify#2
-% 把recover里的set(f0,'WindowButtonmotionfcn',@windowmotionf)去掉，标记是modify#1
-
+% 这一版里面的ROIInfo是使用自动检测程序自动生成的
 function FlashAnalyzer(varargin)
-tic
     % ROI是画出的ROI的线的句柄，ROIpoint是flash的参数和围成ROI的点，ROItext是标记ROI的数字的句柄，flashsignal是ROI的时间序列均值
     % drawf是图片显示的各层axes的句柄
     global newpath1 f0 th Datacursort panel12 panel112 listboxtemp Play Stop Mergebutton ShowTrackerImage Show_mean...
@@ -11,9 +8,7 @@ tic
         BCdata bits panel111 mapAll TraceColor channelcheckbox Time Pathname Filename newpathsavestatus...
         newpathload_status xy info r rr rrchannel lastVal lastVal1 count currentflash ROI ROItext ROIpoint flg...
         flashsignal signalpoint lsmdata lsm_image signal hlabel stabledata ROIInfo flashThresh...
-        drawlinearray drawlinetextarray drawlinecount sto row col zstack h_R h_P h_D t_R t_P t_D channel info_extend CountCell...
-        CellMarker CellMarkerText CellMarkerCount
-        
+        drawlinearray drawlinetextarray drawlinecount sto row col zstack h_R h_P h_D channel info_extend
     if ~isempty(varargin)
         if length(varargin)>1
             feval(varargin{1},varargin{2:end});
@@ -26,7 +21,6 @@ tic
         newpath1='';
         f0 = figure('Visible','on','Menubar','none','Toolbar','none','Units','Normalized','Position',[0,0,1,0.95],'numbertitle','off','resize','on');
         set(f0,'name','Superoxide Flashes Detector','tag','figure1','color',[0.94,0.94,0.94])
-        set(f0,'keypressfcn',@keyPress)
         warning off all;
         SetIcon(f0);
         th = uitoolbar(f0);
@@ -41,9 +35,7 @@ tic
         uipushtool(th,'cdata',imread('.\bitmaps\show_trace.bmp'),'tooltipstring','show trace','clickedcallback',@showTrace);
         uipushtool(th,'cdata',imread('.\bitmaps\Merge.bmp'),'tooltipstring','MergeAll','clickedcallback',@MergeAll);
         uipushtool(th,'cdata',imread('.\bitmaps\universal.bmp'),'tooltipstring','universal','clickedcallback',@universal);
-        CountCell=uitoggletool(th,'cdata',imread('.\bitmaps\countcell.bmp'),'tooltipstring','show cell number',...
-            'OnCallback',@CountCellOnFcn,'OffCallback',@CountCellOffFcn);
-        
+
         %     panel1左侧主面板
         panel1=uipanel(f0,'Title','','FontSize',12,'BackgroundColor','white','bordertype','etchedin','units','Normalized','Position',[0 0 0.6 1]);
 
@@ -258,10 +250,7 @@ tic
         count=0; % 总的ROI数
         currentflash=0; % 当前选中的ROI编号
         ROI={}; % 存放ROI划的线的句柄
-        ROItext=[]; % ROI的文字
-        CellMarker={}; % 存放细胞标记
-        CellMarkerText=[]; % 细胞标记的文字
-        CellMarkerCount=0; %细胞标记的计数
+        ROItext=[]; % ROI的文件
         ROIpoint={}; % 存放绘ROI的点位置
         flg=[];
         flashsignal={}; % 存放所有ROI内的像素均值
@@ -283,10 +272,6 @@ tic
         h_R=[];
         h_P=[];
         h_D=[];
-        
-        t_R=[];
-        t_P=[];
-        t_D=[];
         
         ROIInfo={}; 
         % ROIInfo是个cell，行数是ROI总数，第一列是ROI编号的字符串，
@@ -485,11 +470,7 @@ function drawlinef(~,~)
                     x1=point.ind;y1=point.pea;
                     x2=point.base;y2=point.basepea;
                     x3=point.down;y3=point.downpea;
-                    x4=point.tind;y4=point.tpea;
-                    x5=point.tbase;y5=point.tbasepea;
-                    x6=point.tdown;y6=point.tdownpea;
-%                     x=[x1,x2,x3];y=[y1,y2,y3];
-                    x=[x1,x2,x3,x4,x5,x6];y=[y1,y2,y3,y4,y5,y6];
+                    x=[x1,x2,x3];y=[y1,y2,y3];
                     l=length(x);
                     for i=1:l
                         if abs(cg(1,1)-(x(i)))+abs(cg(1,2)-y(i))<2
@@ -583,11 +564,7 @@ function drawlinef(~,~)
                         x1=point.ind;y1=point.pea;
                         x2=point.base;y2=point.basepea;
                         x3=point.down;y3=point.downpea;
-                        x4=point.tind;y4=point.tpea;
-                        x5=point.tbase;y5=point.tbasepea;
-                        x6=point.tdown;y6=point.tdownpea;
-    %                     x=[x1,x2,x3];y=[y1,y2,y3];
-                        x=[x1,x2,x3,x4,x5,x6];y=[y1,y2,y3,y4,y5,y6];
+                        x=[x1,x2,x3];y=[y1,y2,y3];
                         l=length(x);
                         for i=1:l
                             if abs(cg(1,1)-(x(i)))+abs(cg(1,2)-y(i))<2
@@ -676,8 +653,7 @@ end
 function recover(~,~)
     global f0
 
-% modify#1
-%     set(f0,'WindowButtonmotionfcn',@windowmotionf)
+    set(f0,'WindowButtonmotionfcn',@windowmotionf)
     set(f0,'WindowButtonDownFcn','')
     set(f0,'WindowButtonupFcn','')
 
@@ -704,11 +680,7 @@ function windowmotionf(~,~)
                     x1=point.ind;y1=point.pea;
                     x2=point.base;y2=point.basepea;
                     x3=point.down;y3=point.downpea;
-                    x4=point.tind;y4=point.tpea;
-                    x5=point.tbase;y5=point.tbasepea;
-                    x6=point.tdown;y6=point.tdownpea;
-%                     x=[x1,x2,x3];y=[y1,y2,y3];
-                    x=[x1,x2,x3,x4,x5,x6];y=[y1,y2,y3,y4,y5,y6];
+                    x=[x1,x2,x3];y=[y1,y2,y3];
                     l=length(x);
                     for i=1:l
                         if abs(cg(1,1)-(x(i)))+abs(cg(1,2)-y(i))<2
@@ -803,7 +775,6 @@ end
 function retangle(~,~)
     global info Time r Rectanglt drawline Segpolyt ROIselection AutoROIp f0 drawf trace count signalpoint flashsignal...
         currentflash row col signal channel lsmdata ROIInfo Leftt Rightt ROI ROIpoint hidef ROItext listboxtemp
-
     if isfield(info,'TimeOffset')
         Time=info.TimeOffset;
     else
@@ -824,6 +795,7 @@ function retangle(~,~)
     end
 
     function wb(~,~)
+
         p=get(f0,'currentpoint');
         pg=get(drawf.f1,'currentpoint');
 
@@ -844,11 +816,7 @@ function retangle(~,~)
                     x1=point.ind;y1=point.pea;
                     x2=point.base;y2=point.basepea;
                     x3=point.down;y3=point.downpea;
-                    x4=point.tind;y4=point.tpea;
-                    x5=point.tbase;y5=point.tbasepea;
-                    x6=point.tdown;y6=point.tdownpea;
-%                     x=[x1,x2,x3];y=[y1,y2,y3];
-                    x=[x1,x2,x3,x4,x5,x6];y=[y1,y2,y3,y4,y5,y6];
+                    x=[x1,x2,x3];y=[y1,y2,y3];
                     l=length(x);
                     for i=1:l
                         if abs(cg(1,1)-(x(i)))+abs(cg(1,2)-y(i))<2
@@ -997,8 +965,7 @@ end
 
 function poly(~,~)
     global info Time r Rectanglt drawline Segpolyt ROIselection AutoROIp f0 drawf trace count ROIInfo...
-        currentflash row col signal channel lsmdata flashsignal Leftt Rightt ROI ROIpoint hidef ROItext listboxtemp...
-        CountCell CellMarkerCount CellMarker CellMarkerText CellMarkerPoint
+        currentflash row col signal channel lsmdata flashsignal Leftt Rightt ROI ROIpoint hidef ROItext listboxtemp
     
     x=[];
     y=[];
@@ -1060,88 +1027,72 @@ function poly(~,~)
             set(h1,'XData',xdat,'YData',ydat);drawnow
         end
 
-        function wbucb(src,~) 
+        function wbucb(src,~)
             if strcmp(get(src,'SelectionType'),'open')
                 set(src,'WindowButtonMotionFcn',@wb)
                 %画ROI的线
                 h1=line('XData',[x(1),x(end)],'YData',[y(1),y(end)],'color','r','Parent',drawf.f3);
                 hh=[hh,h1];
-                
                 if length(x)==1
                     delete(hh)
                     x=[];y=[];
                 else
-                    if strcmp(get(CountCell,'state'),'off')  %显示正常的ROI
-                        count=count+1;
-                        if get(hidef,'value')==0
-                            %加ROI的文字说明
-                            h5=text(mean(x),mean(y),num2str(count),'Parent',drawf.f2);
-                            set(h5,'color','r','HorizontalAlignment','center')
-                        else
-                            h5=text(mean(x),mean(y),num2str(count),'Parent',drawf.f2,'visible','off');
-                            set(h5,'color','r','HorizontalAlignment','center')
-                        end
-
-                        ROItext(count)=h5;
-                        ROI{count}=hh;
-                        if currentflash>0
-                            set(ROI{currentflash},'color',[1,1,1]);
-                            set(ROItext(currentflash),'color',[0.8,0.8,0]);
-                        end
-
-                        currentflash=count;
-
-                        if currentflash>1
-                            set(Leftt,'enable','on')
-                            set(Rightt,'enable','off')
-                        else
-                            set(Leftt,'enable','off')
-                            set(Rightt,'enable','off')
-                        end
-
-                        x=[x,x(1)];
-                        y=[y,y(1)];
-                        point.x=x;
-                        point.y=y;
-                        ROIpoint{count}=point;
-                        imag=lsmdata(1).data{1};
-
-                        %多边形ROI二值图
-                        bw=roipoly(imag, x, y);
-
-                        signal=cell(1,channel);
-                        for j=1:channel
-                            signal1=zeros(1,r);
-                            for i=1:r
-                                imag=lsmdata(i).data{j};
-                                signal1(i)=mean(double(imag(bw==1)));
-                            end
-                            signal{j}=signal1;
-                        end
-
-                        plotOnTracef3;
-
-                        flashsignal{count}=signal;
-                        ROIInfo{count,1}=num2str(count);
-                        formROIInfoAndsignalpoint;
-                        set(listboxtemp,'string',ROIInfo(:,1),'value',count);
-                        currentmark([],[]);
-                        x=[];y=[];
-                        hh=[]; 
-                    else %显示细胞的Marker
-                        CellMarkerCount=CellMarkerCount+1;
-                        CellMarkerText(CellMarkerCount)=text(mean(x),mean(y),num2str(CellMarkerCount),'Parent',drawf.f2,...
-                            'color','g','HorizontalAlignment','center');
-                        CellMarker{CellMarkerCount}=hh;
-                        x=[x,x(1)];
-                        y=[y,y(1)];
-                        point.x=x;
-                        point.y=y;
-                        CellMarkerPoint{CellMarkerCount}=point;
-                        hh=[];
-                        x=[];
-                        y=[];
+                    count=count+1;
+                    if get(hidef,'value')==0
+                        %加ROI的文字说明
+                        h5=text(mean(x),mean(y),num2str(count),'Parent',drawf.f2);
+                        set(h5,'color','r','HorizontalAlignment','center')
+                    else
+                        h5=text(mean(x),mean(y),num2str(count),'Parent',drawf.f2,'visible','off');
+                        set(h5,'color','r','HorizontalAlignment','center')
                     end
+
+                    ROItext(count)=h5;
+                    ROI{count}=hh;
+                    if currentflash>0
+                        set(ROI{currentflash},'color',[1,1,1]);
+                        set(ROItext(currentflash),'color',[0.8,0.8,0]);
+                    end
+
+                    currentflash=count;
+                    
+                    if currentflash>1
+                        set(Leftt,'enable','on')
+                        set(Rightt,'enable','off')
+                    else
+                        set(Leftt,'enable','off')
+                        set(Rightt,'enable','off')
+                    end
+
+                    x=[x,x(1)];
+                    y=[y,y(1)];
+                    point.x=x;
+                    point.y=y;
+                    ROIpoint{count}=point;
+                    imag=lsmdata(1).data{1};
+                    
+                    %多边形ROI二值图
+                    bw=roipoly(imag, x, y);
+
+                    signal=cell(1,channel);
+                    for j=1:channel
+                        signal1=zeros(1,r);
+                        for i=1:r
+                            imag=lsmdata(i).data{j};
+                            signal1(i)=mean(double(imag(bw==1)));
+                        end
+                        signal{j}=signal1;
+                    end
+
+                    plotOnTracef3;
+
+                    flashsignal{count}=signal;
+                    ROIInfo{count,1}=num2str(count);
+                    formROIInfoAndsignalpoint;
+                    set(listboxtemp,'string',ROIInfo(:,1),'value',count);
+                    currentmark([],[]);
+                    x=[];y=[];
+                    hh=[];
                 end
             end
         end
@@ -1219,8 +1170,7 @@ end
 
 function delet(~,~)
     global Leftt Rightt ROIselection Rectanglt Segpolyt AutoROIp f0 signal count ROIpoint currentflash...
-        signalpoint ROI ROIInfo ROItext drawf trace listboxtemp flashsignal...
-        CellMarker CellMarkerText CellMarkerCount CellMarkerPoint
+        signalpoint ROI ROIInfo ROItext drawf trace listboxtemp flashsignal
 
     choice = questdlg('Do you detemine to detele all manual ROI?','Delete all manual ROI','Yes','No','No');
     switch choice
@@ -1244,10 +1194,6 @@ function delet(~,~)
             signalpoint={};
             ROI={};
             ROItext=[];
-            CellMarker={};
-            CellMarkerText=[];
-            CellMarkerCount=0;
-            CellMarkerPoint={};
             cla(drawf.f2)
             cla(drawf.f3)
             cla(drawf.f4)
@@ -1260,9 +1206,9 @@ function delet(~,~)
     end 
 end
 
-function hideon(~,~)
+function hideon(s,~)
     global count ROItext hidef hide hider
-    if get(hidef,'value')==1
+    if get(s,'value')==1
         for i=1:count
             set(ROItext(i),'visible','off');
         end
@@ -1276,9 +1222,9 @@ function hideon(~,~)
 
 end
 
-function hideROIon(~,~)
+function hideROIon(s,~)
     global count ROI hideROIf hideROI hideROIr
-    if get(hideROIf,'value')==1
+    if get(s,'value')==1
         for i=1:count
             set(ROI{i},'visible','off');
         end
@@ -1484,11 +1430,7 @@ function cb2c(~,~)
                 x1=point.ind;y1=point.pea;
                 x2=point.base;y2=point.basepea;
                 x3=point.down;y3=point.downpea;
-                x4=point.tind;y4=point.tpea;
-                x5=point.tbase;y5=point.tbasepea;
-                x6=point.tdown;y6=point.tdownpea;
-%                     x=[x1,x2,x3];y=[y1,y2,y3];
-                x=[x1,x2,x3,x4,x5,x6];y=[y1,y2,y3,y4,y5,y6];
+                x=[x1,x2,x3];y=[y1,y2,y3];
                 l=length(x);
                 for i=1:l
                     if abs(cg(1,1)-(x(i)))+abs(cg(1,2)-y(i))<2
@@ -1506,7 +1448,7 @@ function cb2c(~,~)
         set(f0,'WindowButtonDownFcn','')
     end
 
-    function down(~,~)
+    function down(s,e)
         for jj=1:count
             set(ROI{jj},'color',[1,1,1]);
             set(ROItext(jj),'color',[0.8,0.8,0]);
@@ -1525,7 +1467,7 @@ function cb2c(~,~)
         set(trace.f3,'OuterPosition',[0,0,1,1])
         plotOnTracef3;
         currentmark([],[]);
-        set(listboxtemp,'value',currentflash); 
+        set(listboxtemp,'value',currentflash);
     end
 end
 
@@ -1533,9 +1475,7 @@ function savestatusf(~,~)
     global newpathsavestatus Filename Leftt Rightt ROIselection Rectanglt Segpolyt AutoROIp f0 xy count...
         currentflash flashsignal lsmdata mapAll ROIpoint ROIInfo TraceColor TraceToShow...
         info_extend channel signalpoint info newpath1 Pathname lastVal signal BCdata...
-        drawf ROI ROItext trace listboxtemp r rr panel112 panel111 TMRMCh cpYFPCh TPMTCh Time...
-        CellMarkerPoint
-    
+        drawf ROI ROItext trace listboxtemp r rr panel112 panel111 TMRMCh cpYFPCh TPMTCh Time
      if ~exist('newpath','var')||isempty(newpathsavestatus)
         newpathsavestatus=cd;
      end
@@ -1596,8 +1536,7 @@ function savestatusf(~,~)
             status.BCdata=BCdata;
             status.TraceToShow=TraceToShow;
             status.Time=Time;
-            status.CellMarkerPoint=CellMarkerPoint;
-            
+         
             save(strcat(fn,'_MultipleStatus','.mat'), 'status')
 
             Filename='';
@@ -1631,12 +1570,10 @@ function savestatusf(~,~)
     set(f0,'name','Flash Analysis');
 end
 
-function savetracef(s,~) 
+function savetracef(~,~) 
     global ROI info_extend channel info Time r signal flashsignal Filename newpath1 Pathname count ROIInfo
-    global signalpoint
-    
-    val = get(s,'Value'); %自动化时此句注释掉，改为下面那句
-%     val=1;
+%     val = get(s,'Value'); %自动化时此句注释掉，改为下面那句
+    val=1;
     if val==2
         roisize=length(ROI);
         if roisize
@@ -1704,59 +1641,34 @@ function savetracef(s,~)
         end
 
     elseif  val==1
-%         if count
-%             data=[];
-%             cname={'ROI','F0','Peak','F_end','deltaF/F0','TimetoPeak','R50','T50','FDHM','class'};
-%             for id=1:count
-%                 if ~isempty(ROIInfo{id,2})
-%                     flashpeaks=logical(ROIInfo{id,2}(:,31));
-%                     if sum(flashpeaks)
-%                         data=cat(1,data,[id*ones(sum(flashpeaks),1) ROIInfo{id,2}(flashpeaks,[1,3,2,8,12,10,11,9,31])]);
-%                     end
-%                 end
-%             end
-%             xlswrite1(data,'',cname);
-%         else
-%             errordlg('There is no data output!','','modal');
-%         end
-
         if count
             data=[];
-            cname={'ROI','cpYFP_F0','Peak','F_end','deltaF/F0','TMRM_F0','Peak','F_end','deltaF/F0'};
+            cname={'ROI','F0','Peak','F_end','deltaF/F0','TimetoPeak','R50','T50','FDHM','class'};
             for id=1:count
-                for id1=1:length(signalpoint{id}.ind)
-                    cpYFP_F0=signalpoint{id}.basepea(id1);
-                    cpYFP_Peak=signalpoint{id}.pea(id1);
-                    cpYFP_F_end=signalpoint{id}.downpea(id1);
-                    cpYFP_deltaF_F0=(cpYFP_Peak-cpYFP_F0)/cpYFP_F0;
-
-                    TMRM_F0=signalpoint{id}.tbasepea(id1);
-                    TMRM_Peak=signalpoint{id}.tpea(id1);
-                    TMRM_F_end=signalpoint{id}.tdownpea(id1);
-                    TMRM_deltaF_F0=(TMRM_Peak-TMRM_F0)/TMRM_F0;
-                    
-                    data=cat(1,data,[id cpYFP_F0 cpYFP_Peak cpYFP_F_end cpYFP_deltaF_F0 TMRM_F0 TMRM_Peak TMRM_F_end TMRM_deltaF_F0]);
+                if ~isempty(ROIInfo{id,2})
+                    flashpeaks=logical(ROIInfo{id,2}(:,31));
+                    if sum(flashpeaks)
+                        data=cat(1,data,[id*ones(sum(flashpeaks),1) ROIInfo{id,2}(flashpeaks,[1,3,2,8,12,10,11,9,31])]);
+                    end
                 end
             end
             xlswrite1(data,'',cname);
+        else
+            errordlg('There is no data output!','','modal');
         end
     end        
 end
 
 function f0Downf(~,~)
     % Figure 上 trace 的buttondown function
-    global info Time r f0 trace currentflash signalpoint signal h_R h_P h_D t_R t_P t_D...
-        cpYFPCh TMRMCh
+    global info Time r f0 trace currentflash signalpoint signal h_R h_P h_D
     if isfield(info,'TimeOffset')
         Time=info.TimeOffset;
     else
         Time=1:r;
     end
-    
-    %下面注释掉的这一大段是原来的程序，是在cpYFP的trace通过上升来标记的
-%{
-    %        TimeOffset为相对的绝对时间，单位是秒，为double类型
-    if strcmp(get(f0,'selectiontype'),'alt')
+%         TimeOffset为相对的绝对时间，单位是秒，为double类型
+    if strcmp(get(f0,'selectiontype'),'alt') 
 %             'alt'表示单击鼠标右键
         if strcmp(get(f0,'pointer'),'cross')
 %                 'cross'表示光标为十字
@@ -1771,54 +1683,38 @@ function f0Downf(~,~)
 %                 base为flash的起点横坐标，就是直接在trace上选取的点。
             ind=point.ind;
 %                 ind为flash峰值的横坐标，是起点15个点以内的最高值所在位置。
-            tbase=point.base;
-            tind=point.tind;
-            tdown=point.tdown;
-            
             if isempty(base)
                 if curr+15<=r
-                    ind=find(signal{cpYFPCh}(curr:curr+15)==max(signal{cpYFPCh}(curr:curr+15)));
+                    ind=find(signal{1}(curr:curr+15)==max(signal{1}(curr:curr+15)));
                     ind=ind(1)+curr-1;
                     if ind>curr
-                        pea=signal{cpYFPCh}(ind);
-                        down=find(signal{cpYFPCh}(ind:min(r,ind+15))==min(signal{cpYFPCh}(ind:min(r,ind+15))));
+                        pea=signal{1}(ind);
+                        down=find(signal{1}(ind:min(r,ind+15))==min(signal{1}(ind:min(r,ind+15))));
                         down=down(1)+ind-1;
-                        downpea=signal{cpYFPCh}(down);
-                        base=curr;basepea=signal{cpYFPCh}(base);
+                        downpea=signal{1}(down);
+                        base=curr;basepea=signal{1}(base);
                         point.base=base;point.basepea=basepea;
                         point.ind=ind;point.pea=pea;
                         point.down=down;point.downpea=downpea;
-                        point.tbase=base;
-                        point.tind=ind;
-                        point.tdown=down;
-                        point.tpea=signal{TMRMCh}(ind);
-                        point.tbasepea=signal{TMRMCh}(base);
-                        point.tdownpea=signal{TMRMCh}(down);
-%                     else
-%                         he=errordlg('Can not creat here!');
-%                         SetIcon(he);                            
+                    else
+                        he=errordlg('Can not creat here!');
+                        SetIcon(he);                            
                     end
                 elseif r-curr<15
-                    ind=find(signal{cpYFPCh}(curr:r)==max(signal{cpYFPCh}(curr:r)));
+                    ind=find(signal{1}(curr:r)==max(signal{1}(curr:r)));
                     ind=ind(1)+curr-1;
                     if ind<r&&ind>curr
-                        pea=signal{cpYFPCh}(ind);
-                        down=find(signal{cpYFPCh}(ind:r)==min(signal{cpYFPCh}(ind:r)));
+                        pea=signal{1}(ind);
+                        down=find(signal{1}(ind:r)==min(signal{1}(ind:r)));
                         down=down(1)+ind-1;
-                        downpea=signal{cpYFPCh}(down);
-                        base=curr;basepea=signal{cpYFPCh}(base);
+                        downpea=signal{1}(down);
+                        base=curr;basepea=signal{1}(base);
                         point.base=base;point.basepea=basepea;
                         point.ind=ind;point.pea=pea;
                         point.down=down;point.downpea=downpea;
-                        point.tbase=base;
-                        point.tind=ind;
-                        point.tdown=down;
-                        point.tpea=signal{TMRMCh}(ind);
-                        point.tbasepea=signal{TMRMCh}(base);
-                        point.tdownpea=signal{TMRMCh}(down);
-%                     else
-%                         he=errordlg('Can not creat here!');
-%                         SetIcon(he); 
+                    else
+                        he=errordlg('Can not creat here!');
+                        SetIcon(he); 
                     end
                 end
             else
@@ -1826,247 +1722,197 @@ function f0Downf(~,~)
                 big=find(base<curr);
                 if ~isempty(small)&&~isempty(big)
                     if curr>down(big(end))   
-                        id=find(signal{cpYFPCh}(curr:base(small(1)))==max(signal{cpYFPCh}(curr:base(small(1)))));
+                        id=find(signal{1}(curr:base(small(1)))==max(signal{1}(curr:base(small(1)))));
                         id=id(1)+curr-1;
                         if id<base(small(1))&&id>curr
-                            dd=find(signal{cpYFPCh}(id:base(small(1)))==min(signal{cpYFPCh}(id:base(small(1)))));
+                            dd=find(signal{1}(id:base(small(1)))==min(signal{1}(id:base(small(1)))));
                             dd=dd(1)+id-1;
                             base=[base(big),curr,base(small)];
-                            basepea=[signal{cpYFPCh}(base(big)),signal{cpYFPCh}(curr),signal{cpYFPCh}(base(small))];
+                            basepea=[signal{1}(base(big)),signal{1}(curr),signal{1}(base(small))];
                             ind=[ind(big),id,ind(small)];
-                            pea=[signal{cpYFPCh}(base(big)),signal{cpYFPCh}(id),signal{cpYFPCh}(base(small))];
+                            pea=[signal{1}(base(big)),signal{1}(id),signal{1}(base(small))];
                             down=[down(big),dd,down(small)];
-                            downpea=[signal{cpYFPCh}(down(big)),signal{cpYFPCh}(dd),signal{cpYFPCh}(down(small))];                            
+                            downpea=[signal{1}(down(big)),signal{1}(dd),signal{1}(down(small))];
                             point.base=base;point.basepea=basepea;
                             point.ind=ind;point.pea=pea;
                             point.down=down;point.downpea=downpea;
-                            point.tbase=[tbase(big),curr,tbase(small)];
-                            point.tind=[tind(big),id,tind(small)];
-                            point.tdown=[tdown(big),dd,tdown(small)];
-                            point.tpea=signal{TMRMCh}(point.tind);
-                            point.tbasepea=signal{TMRMCh}(point.tbase);
-                            point.tdownpea=signal{TMRMCh}(point.tdown);
-%                         else
-%                             he=errordlg('Can not creat here!');
-%                             SetIcon(he);
+                        else
+                            he=errordlg('Can not creat here!');
+                            SetIcon(he);
                         end
-%                     else
-%                         he=errordlg('Can not creat here!');
-%                         SetIcon(he);                             
+                    else
+                        he=errordlg('Can not creat here!');
+                        SetIcon(he);                             
                     end
                 elseif  ~isempty(small)&&isempty(big)
-                    id=find(signal{cpYFPCh}(curr:base(small(1)))==max(signal{cpYFPCh}(curr:base(small(1)))));
+                    id=find(signal{1}(curr:base(small(1)))==max(signal{1}(curr:base(small(1)))));
                     id=id(1)+curr-1;
                     if id<base(small(1))&&id>curr
-                        dd=find(signal{cpYFPCh}(id:base(small(1)))==min(signal{cpYFPCh}(id:base(small(1)))));
+                        dd=find(signal{1}(id:base(small(1)))==min(signal{1}(id:base(small(1)))));
                         dd=dd(1)+id-1;
                         base=[curr,base(small)];
-                        basepea=signal{cpYFPCh}(base);
+                        basepea=signal{1}(base);
                         ind=[id,ind(small)];
-                        pea=signal{cpYFPCh}(ind);
+                        pea=signal{1}(ind);
                         down=[dd,down(small)];
-                        downpea=signal{cpYFPCh}(down);
+                        downpea=signal{1}(down);
                         point.base=base;point.basepea=basepea;
                         point.ind=ind;point.pea=pea;
-                        point.down=down;point.downpea=downpea;
-                        point.tbase=[tbase(big),curr,tbase(small)];
-                        point.tind=[tind(big),id,tind(small)];
-                        point.tdown=[tdown(big),dd,tdown(small)];
-                        point.tpea=signal{TMRMCh}(point.tind);
-                        point.tbasepea=signal{TMRMCh}(point.tbase);
-                        point.tdownpea=signal{TMRMCh}(point.tdown);
-%                     else
-%                         he=errordlg('Can not creat here!');
-%                         SetIcon(he);
+                        point.down=down;point.downpea=downpea;                           
+                    else
+                        he=errordlg('Can not creat here!');
+                        SetIcon(he);
                     end
 
                 elseif isempty(small)&&~isempty(big)
                     if curr+15<=r
-                        id=find(signal{cpYFPCh}(curr:curr+15)==max(signal{cpYFPCh}(curr:curr+15)));
+                        id=find(signal{1}(curr:curr+15)==max(signal{1}(curr:curr+15)));
                         id=id(1)+curr-1;
                         if id>curr
-                            dd=find(signal{cpYFPCh}(id:min(id+15,r))==min(signal{cpYFPCh}(id:min(id+15,r))));
+                            dd=find(signal{1}(id:min(id+15,r))==min(signal{1}(id:min(id+15,r))));
                             dd=dd(1)+id-1;
                             base=[base(big),curr];
-                            basepea=signal{cpYFPCh}(base);
+                            basepea=signal{1}(base);
                             ind=[ind(big),id];
-                            pea=signal{cpYFPCh}(ind);
+                            pea=signal{1}(ind);
                             down=[down(big),dd];
-                            downpea=signal{cpYFPCh}(down);
+                            downpea=signal{1}(down);
                             point.base=base;point.basepea=basepea;
                             point.ind=ind;point.pea=pea;
                             point.down=down;point.downpea=downpea;
-                            point.tbase=[tbase(big),curr,tbase(small)];
-                            point.tind=[tind(big),id,tind(small)];
-                            point.tdown=[tdown(big),dd,tdown(small)];
-                            point.tpea=signal{TMRMCh}(point.tind);
-                            point.tbasepea=signal{TMRMCh}(point.tbase);
-                            point.tdownpea=signal{TMRMCh}(point.tdown);
-%                         else
-%                             he=errordlg('Can not creat here!');
-%                             SetIcon(he);
+                        else
+                            he=errordlg('Can not creat here!');
+                            SetIcon(he);
                         end
                     elseif r-curr<15
-                        id=find(signal{cpYFPCh}(curr:r)==max(signal{cpYFPCh}(curr:r)));
+                        id=find(signal{1}(curr:r)==max(signal{1}(curr:r)));
                         id=id(1)+curr-1;
                         if id<r&&id>curr
-                            dd=find(signal{cpYFPCh}(id:r)==min(signal{cpYFPCh}(id:r)));
+                            dd=find(signal{1}(id:r)==min(signal{1}(id:r)));
                             dd=dd(1)+id-1;                                
                             base=[base(big),curr];
-                            basepea=signal{cpYFPCh}(base);
+                            basepea=signal{1}(base);
                             ind=[ind(big),id];
-                            pea=signal{cpYFPCh}(ind);
+                            pea=signal{1}(ind);
                             down=[down(big),dd];
-                            downpea=signal{cpYFPCh}(down);
+                            downpea=signal{1}(down);
                             point.base=base;point.basepea=basepea;
                             point.ind=ind;point.pea=pea;
                             point.down=down;point.downpea=downpea;
-                            point.tbase=[tbase(big),curr,tbase(small)];
-                            point.tind=[tind(big),id,tind(small)];
-                            point.tdown=[tdown(big),dd,tdown(small)];
-                            point.tpea=signal{TMRMCh}(point.tind);
-                            point.tbasepea=signal{TMRMCh}(point.tbase);
-                            point.tdownpea=signal{TMRMCh}(point.tdown);
-%                         else
-%                             he=errordlg('Can not creat here!');
-%                             SetIcon(he);
+                        else
+                            he=errordlg('Can not creat here!');
+                            SetIcon(he);
                         end
                     end
                 end
             end  
             signalpoint{currentflash}=point;
-            
+%             if ~isempty(point.ind)
+%                 [ind,pea,base,basepea,down,~,RiseTime,DownTime,hd,ha]=PointFlashAnalysis(signal{1},point,Time);
+%                 ind=[];
+%                     pea=[];
+%                     base=[];
+%                     basepea=[];
+%                     down=[];
+%                     downpea=[];
+%                     RiseTime=[];
+%                     DownTime=[];
+%                     hd=[];
+%                     ha=[];
+%                 Rise{currentflash}=RiseTime;
+%                 Down{currentflash}=DownTime;
+%                 stabledata{currentflash,2}=num2str(ind-base+1);
+%                 stabledata{currentflash,3}=num2str((pea-basepea)/basepea);
+%                 stabledata{currentflash,4}=num2str(down-ind+1);
+%                 stabledata{currentflash,6}=[];
+%                 DeltF_F0{currentflash}=(pea-basepea)/basepea;
+%                 FDHM{currentflash}=hd;
+% %                     FDHM半高宽
+%                 FAHM{currentflash}=ha;
+% %                     FAHM半高以上面积，没有单位
+%                 if RiseTime-DownTime>1
+%                     if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+%                         if length(ind)==1
+%                             Classf(currentflash)=111;
+%                             stabledata{currentflash,5}=111;
+%                         else
+%                             Classf(currentflash)=112;
+%                             stabledata{currentflash,5}=112;
+%                         end
+%                     else
+%                         if length(ind)==1
+%                             Classf(currentflash)=121;
+%                             stabledata{currentflash,5}=121;
+%                         else
+%                             Classf(currentflash)=122;
+%                             stabledata{currentflash,5}=121;
+%                         end
+%                     end
+%                 elseif DownTime-RiseTime>1
+%                     if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+%                         if length(ind)==1
+%                             Classf(currentflash)=211;
+%                             stabledata{currentflash,5}=211;
+%                         else
+%                             Classf(currentflash)=212;
+%                             stabledata{currentflash,5}=212;
+%                         end
+%                     else
+%                         if length(ind)==1
+%                             Classf(currentflash)=221;
+%                             stabledata{currentflash,5}=221;
+%                         else
+%                             Classf(currentflash)=222;
+%                             stabledata{currentflash,5}=222;
+%                         end
+%                     end
+%                 else
+%                     if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+%                         if length(ind)==1
+%                             Classf(currentflash)=311;
+%                             stabledata{currentflash,5}=311;
+%                         else
+%                             Classf(currentflash)=312;
+%                             stabledata{currentflash,5}=312;
+%                         end
+%                     else
+%                         if length(ind)==1
+%                             Classf(currentflash)=321;
+%                             stabledata{currentflash,5}=321;
+%                         else
+%                             Classf(currentflash)=322;
+%                             stabledata{currentflash,5}=322;
+%                         end
+%                     end
+%                 end
+%             else
+%                 Rise{currentflash}=[];
+%                 Down{currentflash}=[];
+%                 DeltF_F0{currentflash}=[];
+%                 FDHM{currentflash}=[];
+%                 FAHM{currentflash}=[];
+%                 stabledata{currentflash,2}=[];
+%                 stabledata{currentflash,3}=[];
+%                 stabledata{currentflash,4}=[];
+%                 stabledata{currentflash,5}=[];
+%                 stabledata{currentflash,6}=[];
+%                 Classf(currentflash)=0;
+%             end
+%             flg(currentflash)=0;
             if ishandle(h_R)
                 delete(h_R)
                 delete(h_P)
-                delete(h_D)
-                
-                delete(t_R)
-                delete(t_P)
-                delete(t_D)
+                delete(h_D)  
             end
             currentmark([],[]);
         end
-    end
-    %}
-
-%  下面这一段是必定的以TMRM下降为基准进行标记的
-%        TimeOffset为相对的绝对时间，单位是秒，为double类型
-
-    if strcmp(get(f0,'selectiontype'),'alt')
-%             'alt'表示单击鼠标右键
-        if strcmp(get(f0,'pointer'),'cross')
-%                 'cross'表示光标为十字
-            curr=get(trace.f3,'currentpoint');
-            curr=curr(1,1);
-            curr=floor(curr);
-            point_bak=signalpoint{currentflash};
-            try
-%                 floor(curr)取整
-            point=signalpoint{currentflash};
-            % 这是针对这个trace上已经有别的标记的情况
-            down=point.down;
-            base=point.base;
-            ind=point.ind;
-
-            tbase=point.tbase;
-            tind=point.tind;
-            tdown=point.tdown;
-
-            %对TMRM的trace操作
-            region=sort([1 tbase tind tdown 100]); %找出curr周围的已标记的点和总的左右边界
-            leftNeighbor=region(find(region<curr,1,'last'));
-            rightNeighbor=region(find(region>curr,1,'first'));
-
-            searchRange=[curr-3 curr+3]; % 寻找TMRM最低点的区域
-            if searchRange(1)<leftNeighbor;searchRange(1)=leftNeighbor;end
-            if searchRange(2)>rightNeighbor;searchRange(2)=rightNeighbor;end  %假定有100个点
-            [~,tind1]=min(signal{TMRMCh}(searchRange(1):searchRange(2))); %寻找TMRM局部最低点的相对位置
-            tind1=tind1+searchRange(1)-1; % tind的绝对位置
-            flashRange=leftNeighbor:rightNeighbor;
-            signalRange=signal{TMRMCh}(flashRange);
-%             signalRange=smooth(signalRange,3);
-            [~,peaklocs]=findpeaks([0 signalRange 0]); % 找出这个区域里所有峰值的相对位置，两边补0以把两边都算进去
-            peaklocs=peaklocs+leftNeighbor-2; % 算出peaklocs的绝对位置，再减掉1
-            tbase1=peaklocs(find(peaklocs<tind1,1,'last'));
-            tdown1=peaklocs(find(peaklocs>tind1,1,'first'));
-
-            tind=sort([tind tind1]);
-            tbase=sort([tbase tbase1]);
-            tdown=sort([tdown tdown1]);
-
-            %对cpYFP的trace操作
-            region=sort([1 base ind down 100]); %找出curr周围的已标记的点和总的左右边界
-            leftNeighbor=region(find(region<curr,1,'last'));
-            rightNeighbor=region(find(region>curr,1,'first'));
-
-            searchRange=[curr-1 curr+2]; % 寻找cpYFP最高点的区域
-            if searchRange(1)<leftNeighbor;searchRange(1)=leftNeighbor;end
-            if searchRange(2)>rightNeighbor;searchRange(2)=rightNeighbor;end  %假定有100个点
-            [~,ind1]=min(-signal{cpYFPCh}(searchRange(1):searchRange(2))); %寻找cpYFP局部最高点的相对位置
-            ind1=ind1+searchRange(1)-1; % tind的绝对位置
-            flashRange=leftNeighbor:rightNeighbor;
-            signalRange=-signal{cpYFPCh}(flashRange);
-%             signalRange=smooth(signalRange,3);
-            [~,peaklocs]=findpeaks([-255 signalRange -255]); % 找出这个区域里所有峰值的相对位置
-            peaklocs=peaklocs+leftNeighbor-2; % 算出peaklocs的绝对位置
-            base1=peaklocs(find(peaklocs<ind1,1,'last'));
-            down1=peaklocs(find(peaklocs>ind1,1,'first'));
-
-            ind=sort([ind ind1]);
-            base=sort([base base1]);
-            down=sort([down down1]);
-
-            point.base=base;
-            point.ind=ind;
-            point.down=down;
-            point.pea=signal{cpYFPCh}(ind);
-            point.basepea=signal{cpYFPCh}(base);
-            point.downpea=signal{cpYFPCh}(down);
-
-            point.tbase=tbase;
-            point.tind=tind;
-            point.tdown=tdown;
-            point.tpea=signal{TMRMCh}(tind);
-            point.tbasepea=signal{TMRMCh}(tbase);
-            point.tdownpea=signal{TMRMCh}(tdown);
-            signalpoint{currentflash}=point;
-
-            if ishandle(h_R)
-                delete(h_R)
-                delete(h_P)
-                delete(h_D)
-
-                delete(t_R)
-                delete(t_P)
-                delete(t_D)
-            end            
-            currentmark([],[]);
-            
-            catch
-                msgbox('Can not create')
-                signalpoint{currentflash}=point_bak;
-                if ishandle(h_R)
-                    delete(h_R)
-                    delete(h_P)
-                    delete(h_D)
-
-                    delete(t_R)
-                    delete(t_P)
-                    delete(t_D)
-                end
-                currentmark([],[]);
-            end
-
-        end
-    end
-
+    end        
 end
 
-function PointDownf(obj,~)
+function PointDownf(obj,e)
     % trace.f3（ROI trace）上的点击响应
-    global info Time r f0 signalpoint currentflash h_R h_P h_D signal ...
-        ROIselection Rectanglt Segpolyt trace t_R t_P t_D cpYFPCh TMRMCh
+    global info Time r f0 signalpoint currentflash h_R h_P h_D signal Rise Down stabledata DeltF_F0 FDHM FAHM...
+        Classf flg ROIselection Rectanglt Segpolyt trace line
     if isfield(info,'TimeOffset')
         Time=info.TimeOffset;
     else
@@ -2075,30 +1921,35 @@ function PointDownf(obj,~)
     if strcmp(get(f0,'selectiontype'),'normal')
 %             'normal'为单击鼠标左键
         current_selected=obj;
-        x=get(current_selected,'xdata');
-        x=x(1,1);
-        point=signalpoint{currentflash};
-        switch get(obj,'tag')
-            case '0'
-                x=find(point.ind==x);
-            case '1'
-                x=find(point.base==x);
-            case '2'
-                x=find(point.down==x);
-            case '3'
-                x=find(point.tind==x);
-            case '4'
-                x=find(point.tbase==x);
-            case '5'
-                x=find(point.tdown==x);
+        if strcmp(get(obj,'tag'),'0')
+            x=get(current_selected,'xdata');
+            x=x(1,1);
+            point=signalpoint{currentflash};
+            ind=point.ind;
+            x=find(ind==x);
+            set(h_R(x),'Selected','on');
+            set(h_P(x),'Selected','on');
+            set(h_D(x),'Selected','on');
+        elseif strcmp(get(obj,'tag'),'1')
+            x=get(current_selected,'xdata');
+            x=x(1,1);
+            point=signalpoint{currentflash};                
+            base=point.base;
+            x=find(base==x);
+            set(h_R(x),'Selected','on');
+            set(h_P(x),'Selected','on');
+            set(h_D(x),'Selected','on');                
+        elseif strcmp(get(obj,'tag'),'2')
+            x=get(current_selected,'xdata');
+            x=x(1,1);
+            point=signalpoint{currentflash};
+            down=point.down;
+            x=find(down==x);
+            set(h_R(x),'Selected','on');
+            set(h_P(x),'Selected','on');
+            set(h_D(x),'Selected','on');                
         end
 
-        set(h_R(x),'Selected','on');
-        set(h_P(x),'Selected','on');
-        set(h_D(x),'Selected','on');
-        set(t_R(x),'Selected','on');
-        set(t_P(x),'Selected','on');
-        set(t_D(x),'Selected','on');
 
         set(f0,'windowbuttonupfcn',@PointUpf)
         set(f0,'windowbuttonmotionfcn',@PointMotionf)
@@ -2106,98 +1957,293 @@ function PointDownf(obj,~)
     elseif strcmp(get(f0,'selectiontype'),'open')
 %             'open'为双击鼠标左键
         current_selected=obj;
-        
-        x=get(current_selected,'xdata');
-        x=x(1);
-        point=signalpoint{currentflash};
-        down=point.down;base=point.base;
-        ind=point.ind;
-        tdown=point.tdown;tbase=point.tbase;
-        tind=point.tind;
-        
-        switch get(current_selected,'tag')
-            case '0'
-                x=find(ind==x);
-            case '1'
-                x=find(base==x);
-            case '2'
-                x=find(down==x);
-            case '3'
-                x=find(tind==x);
-            case '4'
-                x=find(tbase==x);
-            case '5'
-                x=find(tdown==x);
-        end
-        
-        x=x(1);
-        ind(x)=[];
-        base(x)=[];
-        down(x)=[];
-        tind(x)=[];
-        tbase(x)=[];
-        tdown(x)=[];        
-        
-        if ~isempty(ind)
-            point.ind=ind;
-            point.pea=signal{cpYFPCh}(ind);                    
-            point.down=down;
-            point.tind=tind;
-            point.tpea=signal{TMRMCh}(tind);
-            point.tdown=tdown;
+        if strcmp(get(current_selected,'tag'),'0')
+            x=get(current_selected,'xdata');
+            x=x(1);
+            point=signalpoint{currentflash};
+            down=point.down;base=point.base;
+            ind=point.ind;
 
-            point.downpea=signal{cpYFPCh}(down);
-            point.base=base;
-            point.basepea=signal{cpYFPCh}(base);
-            point.tdownpea=signal{TMRMCh}(tdown);
-            point.tbase=tbase;
-            point.tbasepea=signal{TMRMCh}(tbase);
-        else
-            point.ind=ind;
-            point.pea=[];                    
-            point.down=down;
-            point.downpea=[];
-            point.base=base;
-            point.basepea=[];
-
-            point.tind=tind;
-            point.tpea=[];                
-            point.tdown=tdown;
-            point.tdownpea=[];
-            point.tbase=tbase;
-            point.tbasepea=[];                
-        end
-                
-        signalpoint{currentflash}=point;
-        delete(h_R)
-        delete(h_P)
-        delete(h_D)
-        delete(t_R)
-        delete(t_P)
-        delete(t_D)
-        currentmark([],[]);
-    end
-
-    function PointUpf(~,~)        
-        if current_selected~=0
             delete(h_R)
             delete(h_P)
-            delete(h_D)
-            delete(t_R)
-            delete(t_P)
-            delete(t_D)
-            currentmark([],[]);
+            delete(h_D) 
+            x=find(ind==x);
+            x=x(1);
+            ind(x)=[];
+            base(x)=[];
+            down(x)=[];
 
+            if ~isempty(ind)
+                point.ind=ind;
+                point.pea=signal{1}(ind);
+                point.down=down;
+                point.downpea=signal{1}(down);
+                point.base=base;
+                point.basepea=signal{1}(base);
+            else
+                point.ind=ind;
+                point.pea=[];
+                point.down=down;
+                point.downpea=[];
+                point.base=base;
+                point.basepea=[];
+%                     FDHM{currentflash}=[];
+%                     FAHM{currentflash}=[];
+            end
+
+        elseif strcmp(get(current_selected,'tag'),'1')
+            x=get(current_selected,'xdata');
+            x=x(1);
+            point=signalpoint{currentflash};
+            down=point.down;base=point.base;
+            ind=point.ind;
+
+            delete(h_R)
+            delete(h_P)
+            delete(h_D) 
+            x=find(base==x);
+            x=x(1);
+            ind(x)=[];
+            base(x)=[];
+            down(x)=[];
+
+            if ~isempty(ind)
+                point.ind=ind;
+                point.pea=signal{1}(ind);                    
+                point.down=down;
+                point.downpea=signal{1}(down);
+                point.base=base;
+                point.basepea=signal{1}(base);                    
+            else
+                point.ind=ind;
+                point.pea=[];                    
+                point.down=down;
+                point.downpea=[];
+                point.base=base;
+                point.basepea=[];
+%                     FDHM{currentflash}=[];
+%                     FAHM{currentflash}=[];                   
+            end
+
+        elseif strcmp(get(current_selected,'tag'),'2')
+            x=get(current_selected,'xdata');
+            x=x(1);
+            point=signalpoint{currentflash};
+            down=point.down;base=point.base;
+            ind=point.ind;
+
+            delete(h_R)
+            delete(h_P)
+            delete(h_D) 
+            x=find(down==x);
+            x=x(1);                
+            ind(x)=[];
+            base(x)=[];
+            down(x)=[];
+
+            if ~isempty(ind)
+                point.ind=ind;
+                point.pea=signal{1}(ind);
+                point.down=down;
+                point.downpea=signal{1}(down);
+                point.base=base;
+                point.basepea=signal{1}(base);              
+            else
+                point.ind=ind;
+                point.pea=[];                    
+                point.down=down;
+                point.downpea=[];
+                point.base=base;
+                point.basepea=[]; 
+%                     FDHM{currentflash}=[];
+%                     FAHM{currentflash}=[];                   
+            end
+
+        end
+        signalpoint{currentflash}=point;
+        ind=point.ind;
+%         if ~isempty(ind)
+%             [ind,pea,base,basepea,down,downpea,RiseTime,DownTime,hd,ha]=PointFlashAnalysis(signal{1},point,Time);
+%             Rise{currentflash}=RiseTime;
+%             Down{currentflash}=DownTime;
+%             stabledata{currentflash,2}=num2str(ind-base+1);
+%             stabledata{currentflash,3}=num2str((pea-basepea)/basepea);
+%             stabledata{currentflash,4}=num2str(down-ind+1);
+%             stabledata{currentflash,6}=[];
+%             DeltF_F0{currentflash}=(pea-basepea)/basepea;
+%             FDHM{currentflash}=hd;
+%             FAHM{currentflash}=ha;
+%             if RiseTime-DownTime>1
+%                 if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+%                     if length(ind)==1
+%                         Classf(currentflash)=111;
+%                         stabledata{currentflash,5}=111;
+%                     else
+%                         Classf(currentflash)=112;
+%                         stabledata{currentflash,5}=112;
+%                     end
+%                 else
+%                     if length(ind)==1
+%                         Classf(currentflash)=121;
+%                         stabledata{currentflash,5}=121;
+%                     else
+%                         Classf(currentflash)=122;
+%                         stabledata{currentflash,5}=121;
+%                     end
+%                 end
+%             elseif DownTime-RiseTime>1
+%                 if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+%                     if length(ind)==1
+%                         Classf(currentflash)=211;
+%                         stabledata{currentflash,5}=211;
+%                     else
+%                         Classf(currentflash)=212;
+%                         stabledata{currentflash,5}=212;
+%                     end
+%                 else
+%                     if length(ind)==1
+%                         Classf(currentflash)=221;
+%                         stabledata{currentflash,5}=221;
+%                     else
+%                         Classf(currentflash)=222;
+%                         stabledata{currentflash,5}=222;
+%                     end
+%                 end
+%             else
+%                 if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+%                     if length(ind)==1
+%                         Classf(currentflash)=311;
+%                         stabledata{currentflash,5}=311;
+%                     else
+%                         Classf(currentflash)=312;
+%                         stabledata{currentflash,5}=312;
+%                     end
+%                 else
+%                     if length(ind)==1
+%                         Classf(currentflash)=321;
+%                         stabledata{currentflash,5}=321;
+%                     else
+%                         Classf(currentflash)=322;
+%                         stabledata{currentflash,5}=322;
+%                     end
+%                 end
+%             end
+%         else
+%             FDHM{currentflash}=[];
+%             FAHM{currentflash}=[];
+%             Rise{currentflash}=[];
+%             Down{currentflash}=[];
+%             DeltF_F0{currentflash}=[];
+%             stabledata{currentflash,2}=[];
+%             stabledata{currentflash,3}=[];
+%             stabledata{currentflash,4}=[];
+%             stabledata{currentflash,5}=[];
+%             stabledata{currentflash,6}=[];
+%             FDHM{currentflash}=[];
+%             FAHM{currentflash}=[];
+%             Classf(currentflash)=0;
+%         end
+% 
+%         flg(currentflash)=0;
+        currentmark(obj,e);
+    end
+
+    function PointUpf(s,e)
+        if current_selected~=0
+            set(h_R,'Selected','off');
+            set(h_P,'Selected','off');
+            set(h_D,'Selected','off');
+
+%             [ind,pea,base,basepea,down,downpea,RiseTime,DownTime,hd,ha]=PointFlashAnalysis(signal{1},point,Time);
+
+%             if ~isempty(ind)
+%                 Rise{currentflash}=RiseTime;
+%                 Down{currentflash}=DownTime;
+%                 stabledata{currentflash,2}=num2str(ind-base+1);
+%                 stabledata{currentflash,3}=num2str((pea-basepea)/basepea);
+%                 stabledata{currentflash,4}=num2str(down-ind+1);
+%                 stabledata{currentflash,6}=[];
+%                 DeltF_F0{currentflash}=(pea-basepea)./basepea;
+%                 FDHM{currentflash}=hd;
+%                 FAHM{currentflash}=ha;
+%                 if RiseTime-DownTime>1
+%                     if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+%                         if length(ind)==1
+%                             Classf(currentflash)=111;
+%                             stabledata{currentflash,5}=111;
+%                         else
+%                             Classf(currentflash)=112;
+%                             stabledata{currentflash,5}=112;
+%                         end
+%                     else
+%                         if length(ind)==1
+%                             Classf(currentflash)=121;
+%                             stabledata{currentflash,5}=121;
+%                         else
+%                             Classf(currentflash)=122;
+%                             stabledata{currentflash,5}=121;
+%                         end
+%                     end
+%                 elseif DownTime-RiseTime>1
+%                     if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+%                         if length(ind)==1
+%                             Classf(currentflash)=211;
+%                             stabledata{currentflash,5}=211;
+%                         else
+%                             Classf(currentflash)=212;
+%                             stabledata{currentflash,5}=212;
+%                         end
+%                     else
+%                         if length(ind)==1
+%                             Classf(currentflash)=221;
+%                             stabledata{currentflash,5}=221;
+%                         else
+%                             Classf(currentflash)=222;
+%                             stabledata{currentflash,5}=222;
+%                         end
+%                     end
+%                 else
+%                     if (pea(1)-signal{1}(ind(1)-1))>(pea(1)-basepea(1))/(ind(1)-base(1))
+%                         if length(ind)==1
+%                             Classf(currentflash)=311;
+%                             stabledata{currentflash,5}=311;
+%                         else
+%                             Classf(currentflash)=312;
+%                             stabledata{currentflash,5}=312;
+%                         end
+%                     else
+%                         if length(ind)==1
+%                             Classf(currentflash)=321;
+%                             stabledata{currentflash,5}=321;
+%                         else
+%                             Classf(currentflash)=322;
+%                             stabledata{currentflash,5}=322;
+%                         end
+%                     end
+%                 end
+%             else
+%                 Rise{currentflash}=[];
+%                 Down{currentflash}=[];
+%                 DeltF_F0{currentflash}=[];
+%                 stabledata{currentflash,2}=[];
+%                 stabledata{currentflash,3}=[];
+%                 stabledata{currentflash,4}=[];
+%                 stabledata{currentflash,5}=[];
+%                 stabledata{currentflash,6}=[];
+%                 FDHM{currentflash}=[];
+%                 FAHM{currentflash}=[];
+%                 Classf(currentflash)=0;
+%             end
+%             flg(currentflash)=0;
             current_selected=0;
             if get(ROIselection,'value')==1
-                ROIselectionf([],[]);
+                ROIselectionf(s,e);
             elseif get(Rectanglt,'value')==1
-                retangle([],[]);
+                retangle(s,e);
             elseif get(Segpolyt,'value')==1
-                poly([],[]);
+                poly(s,e);
             end
         end
-        recover([],[])
     end
 
     function PointMotionf(~,~)
@@ -2213,55 +2259,55 @@ function PointDownf(obj,~)
                 xy_sstart=pd;
                 xy_sstart=xy_sstart(1,1);
                 [~,xy_sstart]=min(abs(Time-xy_sstart));
-                
-                tag_str=get(current_selected,'tag');
-                
-                switch tag_str
-                    case {'0','1','2'}
-                        try
-                            set(current_selected,'XData',[xy_sstart,xy_sstart],'YData',[signal{cpYFPCh}(xy_sstart),signal{cpYFPCh}(xy_sstart)]);
-                        catch e
-                            disp(xy_sstart)
-                        end
-                    case {'3','4','5'}
-                        try
-                            set(current_selected,'XData',[xy_sstart,xy_sstart],'YData',[signal{TMRMCh}(xy_sstart),signal{TMRMCh}(xy_sstart)]);
-                        catch e
-                            disp(xy_sstart)
-                        end
+                try
+                    set(current_selected,'XData',[xy_sstart,xy_sstart],'YData',[signal{1}(xy_sstart),signal{1}(xy_sstart)]);
+                catch e
+                    disp(xy_sstart)
                 end
-                
-                line_temp=findobj('parent',trace.f3,'tag',tag_str);
-                ind_temp=zeros(1,length(line_temp));
-                for i=1:length(line_temp)
-                x=get(line_temp(i),'xdata');
-                ind_temp(i)=x(1);
+                if strcmp(get(current_selected,'tag'),'1')
+                    point=signalpoint{currentflash};
+                    line=findobj('parent',trace.f3,'tag','1');
+                    base=zeros(1,length(line));
+                    for i=1:length(line)
+                        x=get(line(i),'xdata');
+                        base(i)=x(1);
+                    end
+                    base=sort(base);
+                    basepea=signal{1}(base);
+                    point.base=base;
+                    point.basepea=basepea;
+                    signalpoint{currentflash}=point;
+
+                elseif strcmp(get(current_selected,'tag'),'0')
+                    point=signalpoint{currentflash};
+                    line=findobj('parent',trace.f3,'tag','0');
+                    base=zeros(1,length(line));
+                    for i=1:length(line)
+                        x=get(line(i),'xdata');
+                        base(i)=x(1);
+                    end
+                    basepea=signal{1}(base);
+                    point.ind=base;
+                    point.pea=basepea;
+                    signalpoint{currentflash}=point;                        
+                elseif strcmp(get(current_selected,'tag'),'2')
+                    point=signalpoint{currentflash};
+                    line=findobj('parent',trace.f3,'tag','2');
+                    base=zeros(1,length(line));
+%                         basepea=zeros(1,length(line));
+                    for i=1:length(line)
+                        x=get(line(i),'xdata');
+                        base(i)=x(1);                          
+                    end
+                    base=sort(base);
+                    basepea=signal{1}(base);
+                    point.down=base;
+                    point.downpea=basepea;
+                    signalpoint{currentflash}=point;                        
                 end
-                ind_temp=sort(ind_temp);
-                switch tag_str
-                case '0'
-                point.ind=ind_temp;
-                point.pea=signal{cpYFPCh}(ind_temp);
-                case '1'
-                point.base=ind_temp;
-                point.basepea=signal{cpYFPCh}(ind_temp);
-                case '2'
-                point.down=ind_temp;
-                point.downpea=signal{cpYFPCh}(ind_temp);
-                case '3'
-                point.tind=ind_temp;
-                point.tpea=signal{TMRMCh}(ind_temp);
-                case '4'
-                point.tbase=ind_temp;
-                point.tbasepea=signal{TMRMCh}(ind_temp);
-                case '5'
-                point.tdown=ind_temp;
-                point.tdownpea=signal{TMRMCh}(ind_temp);
-                end
-                signalpoint{currentflash}=point; 
                 set(f0,'windowbuttonupfcn',@PointUpf)
 
-            end
+            end                
 
         else
             set(f0,'pointer','arrow');
@@ -2291,22 +2337,19 @@ function listboxf(~,~)
         delete(findobj(panel111,'Style','Checkbox'))
     end
 
-    filename1=get(listbox,'String');
+    filename1=get(listbox,'String');  
 
     Filename=filename1{get(listbox,'value')};
     showImageWithFilename;
 end
 
 function showImageWithFilename(~,~) 
-disp(toc/60)
 %     tic
     global Filename panel112 panel111 listboxtemp Leftt Rightt ROIselection Rectanglt Segpolyt AutoROIp f0 signal count...
         ROIpoint stabledata currentflash flashsignal signalpoint ROI ROIInfo ROItext drawf...
         trace Pathname lsmdata info xy r row col zstack bits lsm_image info_extend channel channelcheckbox imAll...
         lastVal1 rrchannel BCdata sliderB sliderC panel12 slider rr lastVal mapAll...
-        th threshold namecolor Time timeh TMRMCh cpYFPCh TPMTCh TraceToShow offsets Mergebutton...
-        CellMarker CellMarkerPoint CellMarkerText CellMarkerCount
-    global CountCell
+        th threshold namecolor Time timeh TMRMCh cpYFPCh TPMTCh TraceToShow offsets Mergebutton
     
     set(Leftt,'enable','off');
     set(Rightt,'enable','off');
@@ -2319,7 +2362,7 @@ disp(toc/60)
     set(f0,'WindowButtonUpFcn','')
     set(Mergebutton,'value',0);
     
-%     wb=waitbar(0);
+    wb=waitbar(0);
         
     signal=0;
     count=0;
@@ -2331,11 +2374,6 @@ disp(toc/60)
     ROIInfo={};
     ROI={};
     ROItext=[];
-    CellMarker={};
-    CellMarkerText=[];
-    CellMarkerPoint={};
-    CellMarkerCount=0;
-    
     cla(drawf.f2)
     cla(drawf.f3)
     cla(drawf.f4)
@@ -2424,10 +2462,9 @@ disp(toc/60)
     count1=1;
     total=r;
     for i=2:r
-        offsets(i,:)=image_correlation_offset(lsmdata(1).data{3},lsmdata(i).data{3});
-%         offsets(i,:)=image_correlation_offset(lsmdata(1).data{1},lsmdata(i).data{1}); %以Ch-1 T-1，通常是cpYFP来配准
+        offsets(i,:)=image_correlation_offset(lsmdata(1).data{3},lsmdata(i).data{3}); %以Ch-1 T-1，通常是cpYFP来配准
         count1=count1+1;
-%         waitbar(count1/total,wb)
+        waitbar(count1/total,wb)
     end
     imAll=zeros(col,row,channel,r);
     for i1=1:channel
@@ -2437,7 +2474,7 @@ disp(toc/60)
             imAll(:,:,i1,i)=lsmdata(i).data{i1};
         end
     end
-%     delete(wb)
+    delete(wb)
 % toc
     
     imAll=uint8(mean(imAll,4));
@@ -2481,10 +2518,6 @@ disp(toc/60)
 % extractAllFlashes
 % calMeanFluorescence;
 % calTMRMSum
-%     set(CountCell,'state','on');
-%     CountCellOnFcn([],[]);
-
-tic
 end
 
 function SelectChannelf(s,~)
@@ -2538,12 +2571,6 @@ end
 
 function closereq(~,~)
     % 关闭主窗口
-    switch questdlg('Quit this program?','Quit','Yes','No','No');
-        case 'Yes'
-        case 'No'
-            return;
-    end    
-    
     global f0
     delete(f0)
     delete('lsm_image.mat')
@@ -2581,39 +2608,32 @@ function Table_Selection(s,~)
             plotOnTracef3;
             currentmark([],[]);
         end
+
 %         clear selected_cells l x1 point x1 x2 y2 hh
 %         pack
     end
-    recover([],[]);
+
 end
 
 function currentmark(~,~)
     % 在ROI的trace上做flash的三点标记
-    global signalpoint currentflash h_R h_P h_D trace t_R t_P t_D
+    global signalpoint currentflash h_R h_P h_D trace
     if ~isempty(signalpoint)
         point=signalpoint{currentflash};
         if ~isempty(point.ind)
             hold(trace.f3,'on')
             h_R=[];h_P=[];h_D=[];
-            t_R=[];t_P=[];t_D=[];
             for i=1:length(point.ind)
                 h_R(i)=line('XData',point.ind(i),'YData',point.pea(i),'Marker','s','color','r','markersize',10,'tag','0','parent',trace.f3);
                 h_P(i)=line('XData',point.base(i),'YData',point.basepea(i),'Marker','*','color','r','markersize',10,'tag','1','parent',trace.f3);
                 h_D(i)=line('XData',point.down(i),'YData',point.downpea(i),'Marker','o','color','r','markersize',10,'tag','2','parent',trace.f3);
-                t_R(i)=line('XData',point.tind(i),'YData',point.tpea(i),'Marker','s','color','b','markersize',10,'tag','3','parent',trace.f3);
-                t_P(i)=line('XData',point.tbase(i),'YData',point.tbasepea(i),'Marker','*','color','b','markersize',10,'tag','4','parent',trace.f3);
-                t_D(i)=line('XData',point.tdown(i),'YData',point.tdownpea(i),'Marker','o','color','b','markersize',10,'tag','5','parent',trace.f3);
             end
             hold(trace.f3,'off')
             set(h_R,'buttondownfcn',@PointDownf)
             set(h_P,'buttondownfcn',@PointDownf)
             set(h_D,'buttondownfcn',@PointDownf)
-            set(t_R,'buttondownfcn',@PointDownf)
-            set(t_P,'buttondownfcn',@PointDownf)
-            set(t_D,'buttondownfcn',@PointDownf)
         end
     end
-    
 end
 
 function load_status(~,~)
@@ -2621,8 +2641,7 @@ function load_status(~,~)
     global newpathload_status Filename Leftt Rightt ROIselection Rectanglt Segpolyt AutoROIp f0 xy count...
         currentflash flashsignal lsmdata mapAll ROIpoint ROIInfo channelcheckbox TraceColor BCdata...
         info_extend channel signalpoint info Pathname lastVal signal slider bits Time TMRMCh cpYFPCh TPMTCh...
-        drawf ROI ROItext trace listboxtemp r rr panel112 panel111 row col lastVal1 rrchannel panel12 TraceToShow...
-        CellMarker CellMarkerText CellMarkerCount CellMarkerPoint
+        drawf ROI ROItext trace listboxtemp r rr panel112 panel111 row col lastVal1 rrchannel panel12 TraceToShow
     
     exFilename=Filename;
     if ~exist('newpath','var')||isempty(newpathload_status)
@@ -2734,20 +2753,7 @@ function load_status(~,~)
                 TPMTCh=status.TPMTCh;
                 BCdata=status.BCdata;
                 TraceToShow=status.TraceToShow;
-%                 Time=status.Time;
-                if isfield(status,'CellMarkerPoint')
-                    CellMarkerPoint=status.CellMarkerPoint;
-                end
-                for i=1:count
-                    if ~isfield(signalpoint{i},'tind')
-                        signalpoint{i}.tind=signalpoint{i}.ind;
-                        signalpoint{i}.tbase=signalpoint{i}.base;
-                        signalpoint{i}.tdown=signalpoint{i}.down;
-                        signalpoint{i}.tpea=flashsignal{i}{TMRMCh}(signalpoint{i}.tind);
-                        signalpoint{i}.tbasepea=flashsignal{i}{TMRMCh}(signalpoint{i}.tbase);
-                        signalpoint{i}.tdownpea=flashsignal{i}{TMRMCh}(signalpoint{i}.tdown);
-                    end
-                end
+                Time=status.Time;
             end
 
             if ~iscell(wavelength)
@@ -2782,17 +2788,6 @@ function load_status(~,~)
                 plotOnTracef3;
                 currentmark([],[]);
                 set(listboxtemp,'string',ROIInfo(:,1),'value',currentflash);      
-            end
-            if ~isempty(CellMarkerPoint)
-                CellMarkerCount=length(CellMarkerPoint);
-                for id=1:CellMarkerCount
-                    point=CellMarkerPoint{id};
-                    x=point.x;
-                    y=point.y;
-                    CellMarker{id}=line('XData',x,'YData', y,'color','r','LineWidth',1,'parent',drawf.f3,'visible','off');
-                    CellMarkerText(id)=text(mean(x),mean(y),num2str(id),'Parent',drawf.f2,...
-                            'color','g','HorizontalAlignment','center','visible','off');
-                end
             end
             screen=get(0,'ScreenSize');
             SetLocation(f0,drawf.f1,row,col,screen,panel12)
@@ -2853,6 +2848,7 @@ end
 
 function savef(~,~)
     global currentflash ROIInfo
+%         data=get(stabledata,'data');
     if isempty(ROIInfo)
         he=errordlg('There is no data output!','modal');
         SetIcon(he);
@@ -2864,7 +2860,6 @@ function savef(~,~)
         end
         xlswrite1(data,'',cname);
     end
-
 end
 
 function opennamef(~,~)
@@ -2982,12 +2977,12 @@ function autof(~,~)
         TMRMCh cpYFPCh
 
     channelForAutoROI=num2str(cpYFPCh);
-%     channelForAutoROI=num2str(TMRMCh);
+%     channelForAutoROI=num2str(TMRMCh);        
     if r>1
 % 自动化时以下三句注释掉
-        channelForAutoROI1=inputdlg('input the channel for auto ROI','',1,{channelForAutoROI});
-        if isempty(channelForAutoROI1);return;end
-        channelForAutoROI=channelForAutoROI1{1};
+%         channelForAutoROI1=inputdlg('input the channel for auto ROI','',1,{channelForAutoROI});
+%         if isempty(channelForAutoROI1);return;end
+%         channelForAutoROI=channelForAutoROI1{1};
         set(statush,'string','Busy')
         set(f0,'WindowButtonMotionFcn','')
         cla(trace.f3)
@@ -3118,12 +3113,10 @@ function plotOnTracef3
 
     cla(trace.f3)
     h=plot(trace.f3,signal{1},'color',TraceColor{1},'LineWidth',2,'tag','hs');
-%     set(h,'buttondownfcn',@f0Downf);
+    set(h,'buttondownfcn',@f0Downf);
     hold(trace.f3,'on');
     for j=TraceToShow
-        h=plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
-        % 设置TMRM的trace响应单击事件
-        set(h,'buttondownfcn',@f0Downf);
+        plot(trace.f3,signal{j},'color',TraceColor{j},'LineWidth',2,'tag','hs');
     end
     hold(trace.f3,'off')
     set(trace.f3,'outerposition',[0,0,1,1]);
@@ -3132,60 +3125,50 @@ function plotOnTracef3
 end
 
 function formROIInfoAndsignalpoint
-% modify#2
 %生成ROIInfo的第二列
     global flashThresh TMRMCh cpYFPCh flashsignal currentflash ROIInfo signalpoint
     
-%     trace=flashsignal{currentflash}{cpYFPCh};
-%     para=analyze_flash_parameter(trace);
-%     para=para';
-%     paraMat=cell2mat(para);
-%     if ~isempty(paraMat)
-%         netOut=netPatternRecogIDL(paraMat);
-%         flashType=zeros(size(netOut));
-%         isFlash=netOut>flashThresh;
-%         flashType(isFlash)=1;
-%         TMRMTrace=flashsignal{currentflash}{TMRMCh};
-%         TMRMDowns=TMRMTrace(fix(paraMat(:,17))+1);
-%         isType2=TMRMDowns<10;
-%         flashType(isFlash&isType2)=2;
-%         ROIInfo{currentflash,2}=[paraMat netOut' flashType'];
-%     else
+    trace=flashsignal{currentflash}{cpYFPCh};
+    para=analyze_flash_parameter(trace);
+    para=para';
+    paraMat=cell2mat(para);
+    if ~isempty(paraMat)
+        netOut=netPatternRecogIDL(paraMat);
+        flashType=zeros(size(netOut));
+        isFlash=netOut>flashThresh;
+        flashType(isFlash)=1;
+        TMRMTrace=flashsignal{currentflash}{TMRMCh};
+        TMRMDowns=TMRMTrace(fix(paraMat(:,17))+1);
+        isType2=TMRMDowns<10;
+        flashType(isFlash&isType2)=2;
+        ROIInfo{currentflash,2}=[paraMat netOut' flashType'];
+    else
         ROIInfo{currentflash,2}=[];
-%         flashType=[];
-%     end
+        flashType=[];
+    end
     
-%     if ~isempty(find(flashType, 1))
-%         point.ind=fix(paraMat(isFlash,16))+1;
-%         point.base=fix(paraMat(isFlash,15))+1;
-%         point.down=fix(paraMat(isFlash,17))+1;
-%         point.pea=trace(point.ind);
-%         point.basepea=trace(point.base);
-%         point.downpea=trace(point.down);
-%     else
+    if ~isempty(find(flashType, 1))
+        point.ind=fix(paraMat(isFlash,16))+1;
+        point.base=fix(paraMat(isFlash,15))+1;
+        point.down=fix(paraMat(isFlash,17))+1;
+        point.pea=trace(point.ind);
+        point.basepea=trace(point.base);
+        point.downpea=trace(point.down);        
+    else
         point.ind=[];
         point.base=[];
         point.down=[];
         point.pea=[];
         point.basepea=[];
         point.downpea=[];
-%     end
-%     if ~isempty(paraMat)
-    point.tbase=point.base;
-    point.tind=point.ind;
-    point.tdown=point.down;
-    point.tpea=[];
-    point.tbasepea=[];
-    point.tdownpea=[];
+    end
     signalpoint{currentflash}=point;
-%     end
 end
 
 function autoROI(meanIm,channels_analyze)
     % r是总帧数，channel是总通道数
 global ROIpoint ROIInfo signalpoint count flashsignal lsmdata r channel currentflash
-global TMRMCh
-
+    
 wb=waitbar(0);
 
 H=fspecial('average',30);
@@ -3251,228 +3234,26 @@ for id=1:n
     tmp=num2cell(tmp,2);
     flashsignal{id}=tmp';
     currentflash=id;
-%     formROIInfoAndsignalpoint; %自动flash识别
-
-    %自动识别ROI后产生signalpoint的结构
-    TMRMTrace=flashsignal{currentflash}{TMRMCh};
-    point.ind=[];
-    point.base=[];
-    point.down=[];
-    point.pea=[];
-    point.basepea=[];
-    point.downpea=[];
-    point.tbase=point.base;
-    point.tind=point.ind;
-    point.tdown=point.down;
-    point.tpea=TMRMTrace(point.tind);
-    point.tbasepea=TMRMTrace(point.tbase);
-    point.tdownpea=TMRMTrace(point.tdown);
-    signalpoint{currentflash}=point;
-
+    formROIInfoAndsignalpoint;
     ROIInfo{id,1}=num2str(id);
 end
 
 delete(wb)
-
-% 自动校正整体荧光变化
-meanROIFluorescence
-
 end
 
-% %{
 function calFluorescenceArea
     global xy imAll WholeArea lsmdata
-%     if isempty(imAll)
-        imAll=lsmdata(1).data{1};
-%     end
-    bw=im2bw(imAll(:,:,1),graythresh(imAll(:,:,1)));
+    if isempty(imAll)
+        imAll=lsmdata(1).data{3};
+    end
+    bw=im2bw(imAll(:,:,3),graythresh(imAll(:,:,3)));
     pixels=sum(bw(:));
     WholeArea=pixels*xy.VoxelSizeX*xy.VoxelSizeY*1e12;  %平方微米
-%     figure('name',['Total Area: ',num2str(WholeArea)])
-%     imshow(bw)
-%     clipboard('copy',WholeArea);
+    figure('name',['Total Area: ',num2str(WholeArea)])
+    imshow(bw)
+    clipboard('copy',WholeArea);
 end
-% %}
 
-%{
-function corrAll
-    global lsmdata r listbox dataToExcel1 dataToExcel3 dataToExcel5 dataToExcel10 Filename Pathname
-    
-    dataToExcel1={};
-    dataToExcel3={};
-    dataToExcel5={};
-    dataToExcel10={};
-    dataCh=3;
-    
-    filenames=get(listbox,'string');
-    
-    for listid=1:length(filenames)
-        set(listbox,'value',listid);
-        listboxf
-        
-        comp1=1:r;
-        comp3=1:3:r;
-        comp5=1:5:r;
-        comp10=1:10:r;
-        
-        corrs=zeros(length(comp1)-1,1);
-        for id=1:length(comp1)-1
-            corrs(id)=corr2(lsmdata(comp1(id)).data{dataCh},lsmdata(comp1(id+1)).data{dataCh});
-        end
-        corrs=num2cell(corrs);
-        corrs=[Filename;corrs];
-        dataToExcel1=[dataToExcel1 corrs];
-        
-        corrs=zeros(length(comp3)-1,1);
-        for id=1:length(comp3)-1
-            corrs(id)=corr2(lsmdata(comp3(id)).data{dataCh},lsmdata(comp3(id+1)).data{dataCh});
-        end
-        corrs=num2cell(corrs);
-        corrs=[Filename;corrs];
-        dataToExcel3=[dataToExcel3 corrs];
-        
-        corrs=zeros(length(comp5)-1,1);
-        for id=1:length(comp5)-1
-            corrs(id)=corr2(lsmdata(comp5(id)).data{dataCh},lsmdata(comp5(id+1)).data{dataCh});
-        end
-        corrs=num2cell(corrs);
-        corrs=[Filename;corrs];
-        dataToExcel5=[dataToExcel5 corrs];
-        
-        corrs=zeros(length(comp10)-1,1);
-        for id=1:length(comp10)-1
-            corrs(id)=corr2(lsmdata(comp10(id)).data{dataCh},lsmdata(comp10(id+1)).data{dataCh});
-        end
-        corrs=num2cell(corrs);
-        corrs=[Filename;corrs];
-        dataToExcel10=[dataToExcel10 corrs];
-    end
-    
-    xlswrite([Pathname,'\cor1.xlsx'],dataToExcel1);
-    xlswrite([Pathname,'\cor3.xlsx'],dataToExcel3);
-    xlswrite([Pathname,'\cor5.xlsx'],dataToExcel5);
-    xlswrite([Pathname,'\cor10.xlsx'],dataToExcel10);
-end
-%}
- 
 function universal(~,~)
-    calAllAreas
-    
-%     calFluorescenceArea
-% corrAll
-%     meanROIFluorescence
-beep
-end
-
-function calAllAreas
-    global Filename areas WholeArea
-    f=fopen('names.txt');
-    Filename=fgetl(f);
-    areas=[];
-    while Filename~=-1
-        Filename=[Filename,'.lsm'];
-        showImageWithFilename
-        calFluorescenceArea
-        areas=[areas;WholeArea];
-        Filename=fgetl(f);
-    end
-    fclose(f);
-end
-
-function CountCellOnFcn(~,~)
-    global ROItext count ROI CellMarker CellMarkerText CellMarkerCount CellMarkerPoint drawf Segpolyt
-    for i=1:count
-        set(ROItext(i),'visible','off');
-        set(ROI{i},'visible','off');
-    end
-    if CellMarkerCount>0
-        if ishandle(CellMarker{1})
-            for i=1:CellMarkerCount
-                set(CellMarker{i},'visible','on');
-                set(CellMarkerText(i),'visible','on');
-            end
-        else
-%             msgbox('new drawing')
-            for id=1:CellMarkerCount
-                point=CellMarkerPoint{id};
-                x=point.x;
-                y=point.y;
-                CellMarker{id}=line('XData',x,'YData', y,'color','r','LineWidth',1,'parent',drawf.f3,'visible','on');
-                CellMarkerText(id)=text(mean(x),mean(y),num2str(id),'Parent',drawf.f2,...
-                        'color','g','HorizontalAlignment','center','visible','on');
-            end
-        end
-    end
-    set(Segpolyt,'value',1)
-    poly([],[]);
-end
-
-function CountCellOffFcn(~,~)
-    global ROItext count ROI CellMarker CellMarkerText CellMarkerCount Rectanglt
-    for i=1:count
-        set(ROItext(i),'visible','on');
-        set(ROI{i},'visible','on');
-    end
-    for i=1:CellMarkerCount
-        set(CellMarker{i},'visible','off');
-        set(CellMarkerText(i),'visible','off');
-    end
-    set(Rectanglt,'value',1)
-    retangle([],[]);
-end
-
-function meanROIFluorescence
-    global flashsignal Time flashsignal_origin
-    cpYFPMean=zeros(length(flashsignal),length(Time));
-    TMRMMean=cpYFPMean;
-    for id=1:length(flashsignal)
-        cpYFPMean(id,:)=flashsignal{id}{1};
-        TMRMMean(id,:)=flashsignal{id}{3};
-    end
-    cpYFPMean=mean(cpYFPMean);
-    TMRMMean=mean(TMRMMean);
-    
-    % 用平均荧光去校正每一条trace
-%     if isempty(flashsignal_corrected)
-%         flashsignal_corrected=false;
-%     end
-    
-    if std(cpYFPMean)>1e-10   
-        flashsignal_origin=flashsignal;
-%         flashsignal=flashsignal_origin;
-
-        for id=1:length(flashsignal)
-            ratio_cpYFP=mean(flashsignal{id}{1})/mean(cpYFPMean);
-            ratio_TMRM=mean(flashsignal{id}{3})/mean(TMRMMean);
-            flashsignal{id}{1}=flashsignal{id}{1}-cpYFPMean*ratio_cpYFP+mean(flashsignal{id}{1});
-            flashsignal{id}{3}=flashsignal{id}{3}-TMRMMean*ratio_TMRM+mean(flashsignal{id}{3});
-        end
-%         flashsignal_corrected=true;
-    end
-    
-    if isempty(findobj('name','mean of fluorescence'))
-        figure('name','mean of fluorescence');
-    else
-        figure(findobj('name','mean of fluorescence'));
-    end
-    plot(Time,cpYFPMean,Time,TMRMMean);
-end
-
-function keyPress(~,e)
-global currentflash count listboxtemp
-
-if strcmp(e.Key,'downarrow')
-    if currentflash<count
-        set(listboxtemp,'value',currentflash+1);
-    end
-end
-
-if strcmp(e.Key,'uparrow')
-    if currentflash>1
-        set(listboxtemp,'value',currentflash-1);
-    end
-end
-
-Table_Selection(listboxtemp,[]);
-
+    calFluorescenceArea
 end

@@ -1,6 +1,6 @@
-function [parameter]=analyze_flash_parameter(trace)
+function parameter=analyze_flash_parameter(trace)
 
-trace=gaussian_blur(trace,1,1.1);
+trace=gaussian_blur(trace,3,0.8);
 % thres=0.02*max(a);
 [peaks,num]=finding_peak_swelling(trace,2,2,0.5);
 [peak_intervals,interval_range]=peak_interval(trace,peaks);
@@ -103,7 +103,7 @@ halfmax_end=0.5*(basal_end+peakv);
 % t_half: defined as intersection of 50%max and upcurve and downcurve
 t_half1=finding_intersection(upcurve,halfmax)+pvally;
 t_half2=finding_intersection(downcurve,halfmax_end)+posv;
-drawnow
+% drawnow
 
 % modifing the tstart
 if (posv-t_half1)<0.5*(t_half1-tstart) && (peakv-basal)/basal>=0.1
@@ -165,13 +165,40 @@ DF_F0=(peakv-basal)/basal;
 %     tend,k_left_m,k_right_m,k_left_max,k_right_max,signal_mass,signal_mass_normalized,...
 %     DF_F0,FDHM,RT50,DT50,timetopeak];
 
-parameter_new=[basal,basal_end,...
-    peakv,k_left_m,k_right_m,k_left_max,k_right_max,...
-    DF_F0,FDHM,RT50,DT50,timetopeak,...
-    signal_mass,signal_mass_normalized,tstart+t_offset,posv+t_offset,tend+t_offset,...
-    halfmax,halfmax_end,t_half1+t_offset,t_half2+t_offset,...
-    u90max,u90max_end,t_901+t_offset,t_902+t_offset,...
-    u10max,u10max_end,t_101+t_offset,t_102+t_offset];
+
+
+
+parameter_new=[basal
+    basal_end
+    peakv
+    k_left_m
+    k_right_m
+    k_left_max
+    k_right_max
+    DF_F0
+    FDHM
+    RT50
+    DT50
+    timetopeak
+    signal_mass
+    signal_mass_normalized
+    tstart+t_offset
+    posv+t_offset
+    tend+t_offset
+    halfmax
+    halfmax_end
+    t_half1+t_offset
+    t_half2+t_offset
+    u90max
+    u90max_end
+    t_901+t_offset
+    t_902+t_offset
+    u10max
+    u10max_end
+    t_101+t_offset
+    t_102+t_offset];
+
+parameter_new=parameter_new';
 
 function [vally_new,num]=finding_vally(trace)
 

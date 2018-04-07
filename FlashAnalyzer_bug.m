@@ -1,5 +1,8 @@
-% 这一版里面的ROIInfo是手动指定flash的。把自动判断trace的para的部分注释掉了,标记是modify#2
-% 把recover里的set(f0,'WindowButtonmotionfcn',@windowmotionf)去掉，标记是modify#1
+% 这一版里面的ROIInfo是手动指定flash的
+% 这一版不能用于细胞手动指定ROI，那样会有bug
+% 这一版里可能对分离线粒体同样也有bug，问题在于formROIInfoAndsignalpoint;
+% 这个函数里在生成signalpoint前要自动分析para，为空的话就不添加，
+% 但是对于分离线粒体，基本上都不为空，所以没问题，此文件中的不作修改
 
 function FlashAnalyzer(varargin)
 tic
@@ -25,8 +28,7 @@ tic
         if ishandle(f0);return;end
         newpath1='';
         f0 = figure('Visible','on','Menubar','none','Toolbar','none','Units','Normalized','Position',[0,0,1,0.95],'numbertitle','off','resize','on');
-        set(f0,'name','Superoxide Flashes Detector','tag','figure1','color',[0.94,0.94,0.94])
-        set(f0,'keypressfcn',@keyPress)
+        set(f0,'name','Superoxide Flashes Detector','tag','figure1','color',[0.94,0.94,0.94],'keypressfcn',@keyPress)
         warning off all;
         SetIcon(f0);
         th = uitoolbar(f0);
@@ -676,8 +678,7 @@ end
 function recover(~,~)
     global f0
 
-% modify#1
-%     set(f0,'WindowButtonmotionfcn',@windowmotionf)
+    set(f0,'WindowButtonmotionfcn',@windowmotionf)
     set(f0,'WindowButtonDownFcn','')
     set(f0,'WindowButtonupFcn','')
 
@@ -824,6 +825,7 @@ function retangle(~,~)
     end
 
     function wb(~,~)
+
         p=get(f0,'currentpoint');
         pg=get(drawf.f1,'currentpoint');
 
@@ -1525,7 +1527,7 @@ function cb2c(~,~)
         set(trace.f3,'OuterPosition',[0,0,1,1])
         plotOnTracef3;
         currentmark([],[]);
-        set(listboxtemp,'value',currentflash); 
+        set(listboxtemp,'value',currentflash);
     end
 end
 
@@ -3132,53 +3134,52 @@ function plotOnTracef3
 end
 
 function formROIInfoAndsignalpoint
-% modify#2
 %生成ROIInfo的第二列
     global flashThresh TMRMCh cpYFPCh flashsignal currentflash ROIInfo signalpoint
     
-%     trace=flashsignal{currentflash}{cpYFPCh};
-%     para=analyze_flash_parameter(trace);
-%     para=para';
-%     paraMat=cell2mat(para);
-%     if ~isempty(paraMat)
-%         netOut=netPatternRecogIDL(paraMat);
-%         flashType=zeros(size(netOut));
-%         isFlash=netOut>flashThresh;
-%         flashType(isFlash)=1;
-%         TMRMTrace=flashsignal{currentflash}{TMRMCh};
-%         TMRMDowns=TMRMTrace(fix(paraMat(:,17))+1);
-%         isType2=TMRMDowns<10;
-%         flashType(isFlash&isType2)=2;
-%         ROIInfo{currentflash,2}=[paraMat netOut' flashType'];
-%     else
+    trace=flashsignal{currentflash}{cpYFPCh};
+    para=analyze_flash_parameter(trace);
+    para=para';
+    paraMat=cell2mat(para);
+    if ~isempty(paraMat)
+        netOut=netPatternRecogIDL(paraMat);
+        flashType=zeros(size(netOut));
+        isFlash=netOut>flashThresh;
+        flashType(isFlash)=1;
+        TMRMTrace=flashsignal{currentflash}{TMRMCh};
+        TMRMDowns=TMRMTrace(fix(paraMat(:,17))+1);
+        isType2=TMRMDowns<10;
+        flashType(isFlash&isType2)=2;
+        ROIInfo{currentflash,2}=[paraMat netOut' flashType'];
+    else
         ROIInfo{currentflash,2}=[];
-%         flashType=[];
-%     end
+        flashType=[];
+    end
     
-%     if ~isempty(find(flashType, 1))
-%         point.ind=fix(paraMat(isFlash,16))+1;
-%         point.base=fix(paraMat(isFlash,15))+1;
-%         point.down=fix(paraMat(isFlash,17))+1;
-%         point.pea=trace(point.ind);
-%         point.basepea=trace(point.base);
-%         point.downpea=trace(point.down);
-%     else
+    if ~isempty(find(flashType, 1))
+        point.ind=fix(paraMat(isFlash,16))+1;
+        point.base=fix(paraMat(isFlash,15))+1;
+        point.down=fix(paraMat(isFlash,17))+1;
+        point.pea=trace(point.ind);
+        point.basepea=trace(point.base);
+        point.downpea=trace(point.down);
+    else
         point.ind=[];
         point.base=[];
         point.down=[];
         point.pea=[];
         point.basepea=[];
         point.downpea=[];
-%     end
-%     if ~isempty(paraMat)
-    point.tbase=point.base;
-    point.tind=point.ind;
-    point.tdown=point.down;
-    point.tpea=[];
-    point.tbasepea=[];
-    point.tdownpea=[];
-    signalpoint{currentflash}=point;
-%     end
+    end
+    if ~isempty(paraMat)
+        point.tbase=point.base;
+        point.tind=point.ind;
+        point.tdown=point.down;
+        point.tpea=TMRMTrace(point.tind);
+        point.tbasepea=TMRMTrace(point.tbase);
+        point.tdownpea=TMRMTrace(point.tdown);
+        signalpoint{currentflash}=point;
+    end
 end
 
 function autoROI(meanIm,channels_analyze)
